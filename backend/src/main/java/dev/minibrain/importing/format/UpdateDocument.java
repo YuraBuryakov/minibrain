@@ -45,7 +45,8 @@ public record UpdateDocument(
     public record NewRelation(String from, String type, String to) {
     }
 
-    public record SuggestedSkill(String key, LocalizedText name, String reason) {
+    /** {@code from}: the skill this one grows from (optional); unlocking links "from LEADS_TO key". */
+    public record SuggestedSkill(String key, LocalizedText name, LocalizedText reason, String from) {
     }
 
     /**

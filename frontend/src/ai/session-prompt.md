@@ -65,7 +65,12 @@ summary of the chat:
     { "from": "area.new-skill", "type": "RELATED_TO", "to": "<existing or new key>" }
   ],
   "suggestedSkills": [
-    { "key": "area.next-skill", "name": { "en": "Next Skill", "ru": "Следующий навык" }, "reason": "<why it is a good next step>" }
+    {
+      "key": "area.next-skill",
+      "name": { "en": "Next Skill", "ru": "Следующий навык" },
+      "reason": { "en": "<why it is a good next step>", "ru": "<то же по-русски>" },
+      "from": "<existing or new key it grows from>"
+    }
   ]
 }
 ```
@@ -87,6 +92,8 @@ Rules:
 - **Every new skill must be connected to the tree**: at least one relation in `newRelations` to the focus skill
   or another skill from `knownSkills` (for example `PART_OF` its area parent, or `REQUIRES` a prerequisite).
   A skill with no relation floats outside the map.
+- `suggestedSkills`: topics worth learning next, not learned yet (they wait in the fog until I unlock them).
+  `from` is the skill each one grows from (usually the focus skill); `reason` is bilingual like the other texts.
 - Use existing keys exactly as written in the context. Never invent a key for a skill that should already exist.
 - Relation types: `PART_OF`, `REQUIRES`, `RELATED_TO`, `LEADS_TO`. If `A REQUIRES B`, skip `A RELATED_TO B`.
   Do not repeat relations that the context already lists in `relatedSkills`.

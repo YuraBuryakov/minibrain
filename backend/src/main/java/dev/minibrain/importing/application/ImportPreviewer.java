@@ -13,6 +13,7 @@ import dev.minibrain.importing.format.UpdateDocument;
 import dev.minibrain.learning.persistence.LearningSessionRepository;
 import dev.minibrain.skill.domain.RelationType;
 import dev.minibrain.skill.domain.SkillStatus;
+import dev.minibrain.skill.persistence.SuggestedSkillRepository;
 import dev.minibrain.skill.query.KnowledgeGraph;
 import dev.minibrain.skill.query.KnowledgeGraphQuery;
 import dev.minibrain.skill.query.SkillDetails;
@@ -46,13 +47,15 @@ public class ImportPreviewer {
     private final KnowledgeGraphQuery graph;
     private final SkillDetailsQuery detailsQuery;
     private final LearningSessionRepository sessions;
+    private final SuggestedSkillRepository suggestions;
 
     public ImportPreviewer(ObjectMapper json, KnowledgeGraphQuery graph, SkillDetailsQuery detailsQuery,
-                           LearningSessionRepository sessions) {
+                           LearningSessionRepository sessions, SuggestedSkillRepository suggestions) {
         this.json = json;
         this.graph = graph;
         this.detailsQuery = detailsQuery;
         this.sessions = sessions;
+        this.suggestions = suggestions;
     }
 
     public ImportPreview preview(String text) {
@@ -274,7 +277,7 @@ public class ImportPreviewer {
             }
         }
 
-        // ---- suggested skills: never selected by default (brief §20) ----
+        // ---- suggested skills: stored in the fog, pre-selected (harmless: unlocking is a separate decision on the map) ----
 
         private void suggestedSkills() {
             for (var raw : orEmpty(document.suggestedSkills())) {
@@ -285,10 +288,16 @@ public class ImportPreviewer {
                 if (raw.name() == null || raw.name().isEmpty()) {
                     issues.add(Issue.error(Code.INVALID_VALUE, "Name is missing."));
                 }
+                if (raw.from() != null) {
+                    requireKnown(raw.from(), issues);
+                }
+                // A dismissed suggestion also counts as present: it is not offered again.
                 boolean present = issues.isEmpty() && (existing.containsKey(raw.key()) || newSkills.containsKey(raw.key())
-                        || !seen.add("suggested|" + raw.key()));
-                var change = issues.isEmpty() ? new Change.SuggestSkill(raw.key(), raw.name().primary(), raw.name().secondaryRu(), blankToNull(raw.reason())) : null;
-                add(Section.SUGGESTED_SKILLS, raw.key(), display(raw.name()) + " (" + raw.key() + ")", issues, change, present, true);
+                        || suggestions.exists(raw.key()) || !seen.add("suggested|" + raw.key()));
+                LocalizedText reason = raw.reason() == null ? new LocalizedText(null, null) : raw.reason();
+                var change = issues.isEmpty() ? new Change.SuggestSkill(raw.key(), raw.name().primary(), raw.name().secondaryRu(),
+                        reason.primary(), reason.secondaryRu(), raw.from()) : null;
+                add(Section.SUGGESTED_SKILLS, raw.key(), display(raw.name()) + " (" + raw.key() + ")", issues, change, present, false);
             }
         }
 
@@ -414,9 +423,5 @@ public class ImportPreviewer {
 
     private static boolean isBlank(String s) {
         return s == null || s.isBlank();
-    }
-
-    private static String blankToNull(String s) {
-        return isBlank(s) ? null : s.strip();
     }
 }

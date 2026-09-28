@@ -93,7 +93,21 @@ public class CurrentStateQuery {
                         rs.getString("created_at")))
                 .list();
 
+        List<CurrentState.SuggestedSkill> suggestions = jdbc.sql("""
+                        SELECT key, name, name_ru, reason, reason_ru, source_skill_key, created_at, dismissed_at
+                        FROM suggested_skill ORDER BY key
+                        """)
+                .query((rs, rowNum) -> new CurrentState.SuggestedSkill(
+                        rs.getString("key"),
+                        new LocalizedText(rs.getString("name"), rs.getString("name_ru")),
+                        rs.getString("reason") == null && rs.getString("reason_ru") == null ? null
+                                : new LocalizedText(rs.getString("reason"), rs.getString("reason_ru")),
+                        rs.getString("source_skill_key"),
+                        rs.getString("created_at"),
+                        rs.getString("dismissed_at")))
+                .list();
+
         return new CurrentState(CurrentState.TYPE, CurrentState.SCHEMA_VERSION, Instant.now().toString(),
-                skills, relations, evidence, questions, sessions);
+                skills, relations, evidence, questions, sessions, suggestions);
     }
 }

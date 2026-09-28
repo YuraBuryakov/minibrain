@@ -55,3 +55,11 @@ Decided direction is noted; details still get discussed when a wish is picked up
   Answering them is what unlocks new things (ties into the gamification brainstorm).
   Open: difference from Open Questions (a check tests me, a question is a gap), schema, what exactly gets unlocked.
 
+- **AI chat inside MiniBrain (next after step 16, brainstorm first).** Learn right in the app: a chat with the
+  selected skill as context, answers turn into MINIBRAIN_UPDATE (new knowledge, new skills) without copy-paste.
+  I pay for ChatGPT Plus and Claude Max. Open: subscriptions give no API key (API is billed separately);
+  a local `claude -p` (Claude Code, Max login) might drive the chat; API key vs subscription; where the chat
+  history lives; how the update is proposed and previewed.
+- **Ask the AI for a new branch.** I tell the AI what I would like to learn next (an idea, a new area of knowledge)
+  and it proposes a whole new branch of the map, e.g. an `architecture` root with its first skills and relations.
+  Probably arrives as suggestions (step 16 fog) under a new area; the AI chat would be the natural place to ask.

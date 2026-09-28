@@ -141,7 +141,7 @@ class ImportPreviewerTests {
         assertThat(item(preview, "Aggregate REQUIRES Invariant").verdict()).isEqualTo(Verdict.ALREADY_PRESENT);
         assertThat(item(preview, "Domain Event (imp.domain-event)")).satisfies(i -> {
             assertThat(i.verdict()).isEqualTo(Verdict.READY);
-            assertThat(i.selected()).isFalse(); // suggested skills are never pre-selected
+            assertThat(i.selected()).isTrue(); // storing a suggestion is harmless: unlocking is a separate decision
         });
     }
 

@@ -83,7 +83,7 @@ class CurrentStateQueryTests {
 
         mvc.perform(get("/api/exports/current"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.schemaVersion").value(1))
+                .andExpect(jsonPath("$.schemaVersion").value(2))
                 .andExpect(jsonPath("$.relations[?(@.from == 'exp.aa')].to").value("exp.zz"));
     }
 }

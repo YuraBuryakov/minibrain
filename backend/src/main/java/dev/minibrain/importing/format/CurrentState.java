@@ -20,10 +20,11 @@ public record CurrentState(
         List<Relation> relations,
         List<Evidence> evidence,
         List<OpenQuestion> openQuestions,
-        List<LearningSession> learningSessions) {
+        List<LearningSession> learningSessions,
+        List<SuggestedSkill> suggestedSkills) {
 
     public static final String TYPE = "MINIBRAIN_CURRENT";
-    public static final int SCHEMA_VERSION = 1;
+    public static final int SCHEMA_VERSION = 2; // 2: suggestedSkills
 
     /** {@code description} is null when the skill has none. */
     public record Skill(String key, LocalizedText name, LocalizedText description, SkillStatus status,
@@ -45,5 +46,10 @@ public record CurrentState(
     }
 
     public record Notes(String en, String ru) {
+    }
+
+    /** Not a skill yet (brief §14). {@code reason} / {@code from} may be null; {@code dismissedAt} null = still in the fog. */
+    public record SuggestedSkill(String key, LocalizedText name, LocalizedText reason, String from,
+                                 String createdAt, String dismissedAt) {
     }
 }

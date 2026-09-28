@@ -28,7 +28,8 @@ public sealed interface Change {
     record AddRelation(String from, RelationType type, String to) implements Change {
     }
 
-    record SuggestSkill(String key, String name, String nameRu, String reason) implements Change {
+    /** Stored as a suggestion (fog), not as a skill: unlocking happens later, on the map. */
+    record SuggestSkill(String key, String name, String nameRu, String reason, String reasonRu, String from) implements Change {
     }
 
     /** Sets the Russian version of one existing text; {@code original} is its stored English text. */

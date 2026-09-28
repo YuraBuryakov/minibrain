@@ -6,11 +6,12 @@ import dev.minibrain.learning.persistence.LearningSessionRepository;
 import dev.minibrain.revision.domain.RevisionChange;
 import dev.minibrain.revision.persistence.RevisionRepository;
 import dev.minibrain.skill.domain.Skill;
-import dev.minibrain.skill.domain.SkillStatus;
+import dev.minibrain.skill.domain.SuggestedSkill;
 import dev.minibrain.skill.persistence.EvidenceRepository;
 import dev.minibrain.skill.persistence.OpenQuestionRepository;
 import dev.minibrain.skill.persistence.SkillRelationRepository;
 import dev.minibrain.skill.persistence.SkillRepository;
+import dev.minibrain.skill.persistence.SuggestedSkillRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,10 +45,12 @@ public class ImportApplier {
     private final SkillRelationRepository relations;
     private final LearningSessionRepository sessions;
     private final RevisionRepository revisions;
+    private final SuggestedSkillRepository suggestions;
 
     public ImportApplier(ImportPreviewer previewer, SkillRepository skills, EvidenceRepository evidence,
                          OpenQuestionRepository questions, SkillRelationRepository relations,
-                         LearningSessionRepository sessions, RevisionRepository revisions) {
+                         LearningSessionRepository sessions, RevisionRepository revisions,
+                         SuggestedSkillRepository suggestions) {
         this.previewer = previewer;
         this.skills = skills;
         this.evidence = evidence;
@@ -55,6 +58,7 @@ public class ImportApplier {
         this.relations = relations;
         this.sessions = sessions;
         this.revisions = revisions;
+        this.suggestions = suggestions;
     }
 
     /** All or nothing: any failure rolls back every change of this import. */
@@ -79,7 +83,7 @@ public class ImportApplier {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         chosen.forEach(change -> apply(change, touched));
         // Knowledge changes create a Revision (brief §22), inside the same transaction as the changes.
-        revisions.record(RevisionRepository.Source.IMPORT, preview.topic(), chosen.stream().map(ImportApplier::toRevision).toList());
+        revisions.record(RevisionRepository.Source.IMPORT, preview.topic(), chosen.stream().flatMap(ImportApplier::toRevision).toList());
         return new Result(chosen.size(), selectedIds.size() - chosen.size());
     }
 
@@ -101,7 +105,7 @@ public class ImportApplier {
     private static Stream<String> skillsOf(Change change) {
         return switch (change) {
             case Change.CreateSkill c -> Stream.of(c.key());
-            case Change.SuggestSkill c -> Stream.of(c.key());
+            case Change.SuggestSkill c -> Stream.empty(); // not a skill yet: the session notes do not link to it
             case Change.ChangeStatus c -> Stream.of(c.skill());
             case Change.AddEvidence c -> Stream.of(c.skill());
             case Change.AddQuestion c -> Stream.of(c.skill());
@@ -116,8 +120,7 @@ public class ImportApplier {
     private void apply(Change change, Set<String> touched) {
         switch (change) {
             case Change.CreateSkill c -> skills.create(c.key(), c.name(), c.nameRu(), c.description(), c.descriptionRu(), c.status());
-            // Choosing a suggested skill unlocks it (brief §14: it becomes a DISCOVERED skill).
-            case Change.SuggestSkill c -> skills.create(c.key(), c.name(), c.nameRu(), c.reason(), null, SkillStatus.DISCOVERED);
+            case Change.SuggestSkill c -> suggestions.add(new SuggestedSkill(c.key(), c.name(), c.nameRu(), c.reason(), c.reasonRu(), c.from()));
             case Change.ChangeStatus c -> skills.changeStatus(id(c.skill()), c.to());
             case Change.AddEvidence c -> evidence.add(id(c.skill()), c.text(), c.textRu());
             case Change.AddQuestion c -> questions.add(id(c.skill()), c.text(), c.textRu());
@@ -144,18 +147,21 @@ public class ImportApplier {
         }
     }
 
-    /** The history entry for an applied change. Exhaustive: a new Change kind must say how it is remembered. */
-    private static RevisionChange toRevision(Change change) {
+    /**
+     * The history entry for an applied change. Exhaustive: a new Change kind must say how it is remembered.
+     * A suggestion is not knowledge yet: nothing is remembered until it is unlocked.
+     */
+    private static Stream<RevisionChange> toRevision(Change change) {
         return switch (change) {
-            case Change.CreateSkill c -> RevisionChange.skillCreated(c.key(), c.status().name(), c.name());
-            case Change.SuggestSkill c -> RevisionChange.skillCreated(c.key(), SkillStatus.DISCOVERED.name(), c.name());
-            case Change.ChangeStatus c -> RevisionChange.statusChanged(c.skill(), c.from().name(), c.to().name());
-            case Change.AddEvidence c -> RevisionChange.evidenceAdded(c.skill(), c.text());
-            case Change.AddQuestion c -> RevisionChange.questionAdded(c.skill(), c.text());
-            case Change.ResolveQuestion c -> RevisionChange.questionResolved(c.skill(), c.text());
-            case Change.AddRelation c -> RevisionChange.relationAdded(c.from(), c.type().name(), c.to());
-            case Change.Translate c -> RevisionChange.translationAdded(c.skill(), c.target().name().toLowerCase() + ": " + c.ru());
-            case Change.SaveSessionNotes c -> RevisionChange.notesSaved(c.topic());
+            case Change.CreateSkill c -> Stream.of(RevisionChange.skillCreated(c.key(), c.status().name(), c.name()));
+            case Change.SuggestSkill c -> Stream.empty();
+            case Change.ChangeStatus c -> Stream.of(RevisionChange.statusChanged(c.skill(), c.from().name(), c.to().name()));
+            case Change.AddEvidence c -> Stream.of(RevisionChange.evidenceAdded(c.skill(), c.text()));
+            case Change.AddQuestion c -> Stream.of(RevisionChange.questionAdded(c.skill(), c.text()));
+            case Change.ResolveQuestion c -> Stream.of(RevisionChange.questionResolved(c.skill(), c.text()));
+            case Change.AddRelation c -> Stream.of(RevisionChange.relationAdded(c.from(), c.type().name(), c.to()));
+            case Change.Translate c -> Stream.of(RevisionChange.translationAdded(c.skill(), c.target().name().toLowerCase() + ": " + c.ru()));
+            case Change.SaveSessionNotes c -> Stream.of(RevisionChange.notesSaved(c.topic()));
         };
     }
 

@@ -35,6 +35,18 @@ public class KnowledgeGraphQuery {
                         RelationType.valueOf(rs.getString("type")),
                         rs.getString("to_key")))
                 .list();
-        return new KnowledgeGraph(nodes, edges);
+        var suggestions = jdbc.sql("""
+                        SELECT key, name, name_ru, reason, reason_ru, source_skill_key
+                        FROM suggested_skill WHERE dismissed_at IS NULL ORDER BY key
+                        """)
+                .query((rs, rowNum) -> new KnowledgeGraph.Suggestion(
+                        rs.getString("key"),
+                        rs.getString("name"),
+                        rs.getString("name_ru"),
+                        rs.getString("reason"),
+                        rs.getString("reason_ru"),
+                        rs.getString("source_skill_key")))
+                .list();
+        return new KnowledgeGraph(nodes, edges, suggestions);
     }
 }

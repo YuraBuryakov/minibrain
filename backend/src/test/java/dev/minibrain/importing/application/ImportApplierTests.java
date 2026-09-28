@@ -6,6 +6,7 @@ import dev.minibrain.skill.domain.Skill;
 import dev.minibrain.skill.domain.SkillStatus;
 import dev.minibrain.skill.persistence.OpenQuestionRepository;
 import dev.minibrain.skill.persistence.SkillRepository;
+import dev.minibrain.skill.persistence.SuggestedSkillRepository;
 import dev.minibrain.skill.query.SkillDetails;
 import dev.minibrain.skill.query.SkillDetailsQuery;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,9 @@ class ImportApplierTests {
     @Autowired
     LearningSessionRepository sessions;
 
+    @Autowired
+    SuggestedSkillRepository suggestions;
+
     private static final String UPDATE = """
             { "type": "MINIBRAIN_UPDATE", "schemaVersion": 1,
               "changes": [ {
@@ -50,7 +54,7 @@ class ImportApplierTests {
               } ],
               "newSkills": [ { "key": "apply.boundary", "name": "Consistency Boundary", "status": "LEARNING" } ],
               "newRelations": [ { "from": "apply.aggregate", "type": "REQUIRES", "to": "apply.boundary" } ],
-              "suggestedSkills": [ { "key": "apply.event", "name": "Domain Event", "reason": "Next after aggregates" } ] }
+              "suggestedSkills": [ { "key": "apply.event", "name": "Domain Event", "reason": "Next after aggregates", "from": "apply.aggregate" } ] }
             """;
 
     @Test
@@ -63,14 +67,15 @@ class ImportApplierTests {
         ImportApplier.Result result = applier.apply(UPDATE, preselected);
 
         SkillDetails after = details.find("apply.aggregate").orElseThrow();
-        assertThat(result.applied()).isEqualTo(6);
+        assertThat(result.applied()).isEqualTo(7);
         assertThat(after.status()).isEqualTo(SkillStatus.APPLIED);
         assertThat(after.evidence()).extracting(SkillDetails.Evidence::text).containsExactly("Designed the Order aggregate");
         assertThat(after.openQuestions()).extracting(SkillDetails.Question::text)
                 .containsExactly("How big may an aggregate get?", "Where is the boundary?"); // open first, then resolved
         assertThat(after.openQuestions().get(1).resolvedAt()).isNotNull();
         assertThat(after.relations()).extracting(SkillDetails.Relation::key).containsExactly("apply.boundary");
-        assertThat(skills.findByKey("apply.event")).isEmpty(); // suggested skill was not ticked
+        assertThat(skills.findByKey("apply.event")).isEmpty(); // a suggestion goes to the fog, not onto the map
+        assertThat(suggestions.findOpen("apply.event")).hasValueSatisfying(s -> assertThat(s.sourceSkill()).isEqualTo("apply.aggregate"));
 
         // Applying the same text again changes nothing: everything is ALREADY_PRESENT now.
         assertThat(applier.apply(UPDATE, preselected).applied()).isZero();
