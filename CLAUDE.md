@@ -68,7 +68,7 @@ Modules by feature at the top, thin layers inside (DDD-lite, see `docs/decisions
 
 ```text
 backend/src/main/java/dev/minibrain/
-├── <module>/                 skill, importing today; learning, revision later (brief §50)
+├── <module>/                 skill, importing, learning today; revision later (brief §50)
 │   ├── domain/               the model: records, enums, value objects, domain rules
 │   ├── persistence/          *Repository: JdbcClient + SQL, row mapping (write side + simple reads)
 │   ├── query/                read models for screens: *Query + its result records (own SQL)
@@ -118,6 +118,8 @@ Rules of thumb:
 
 Importing a `MINIBRAIN_UPDATE`: the **Import** button on the map (paste text or pick a file, preview, apply).
 AI prompt for building the initial map: `docs/ai/initial-map-prompt.md` (output is `MINIBRAIN_UPDATE` JSON).
+Session prompt (copied by the Skill card): `frontend/src/ai/session-prompt.md`. Permanent rules to paste into
+ChatGPT / Claude settings: `docs/ai/chat-custom-instructions.md`.
 
 Logs: `logs/backend.log`, `logs/frontend.log`. `start` uses the real `data/minibrain.db`; for demos with fake
 data Claude uses a scratch DB via `MINIBRAIN_DB_URL`, never the real one.

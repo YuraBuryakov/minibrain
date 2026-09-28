@@ -200,3 +200,25 @@ Format: date · decision · reason · alternatives considered.
   only ids. Re-applying the same text changes nothing (everything is ALREADY_PRESENT).
 - **Suggested skill ticked = unlocked** as a DISCOVERED skill (brief §14), with the reason as description.
 - `scripts/load-update.ps1` removed. No Revision yet (step 14).
+
+### 2026-09-28 · Step 13b: session notes (module `learning`)
+
+- **Decision:** tables `learning_session` (topic, notes_en, notes_ru) + `learning_session_skill`. The notes are taken
+  from the pasted chat text: the `## English` / `## Русский` sections above the fenced MINIBRAIN_UPDATE block
+  (`importing/format/ChatNotes`). They show up as one "Study notes" preview item; Apply saves them last, linked to
+  every skill the import touched. Identical notes are ALREADY_PRESENT (re-import is a no-op).
+- **Why from the chat text, not inside the JSON:** long markdown with code inside a JSON string is where AIs break
+  escaping; and the AI would write the notes twice. Cost: a bare `.json` file carries no notes.
+- **Fence-safe extraction:** the JSON regex uses `(?:(?!```).)` so a ```json example inside the notes cannot be
+  mistaken for the update block.
+- **UI:** the Skill card only gets a "Study notes (N)" button; notes are read in a centred `<dialog>` with an
+  EN/RU switch, rendered by `react-markdown` (no raw HTML).
+- Bilingual knowledge content (names, evidence, ...) is split out as step 13c.
+- **Revised the same day (real session):** the AI put the notes inside the JSON (`"notes": {"en", "ru"}`) on its own,
+  with correct escaping of long markdown, tables and code, and I copied only the JSON block. So the JSON `notes`
+  field (or `session.notes`) is now the primary source and the session prompt asks for it; the chat-text sections
+  stay as a fallback. A leading "## English" / "## Русский" heading inside a note is dropped.
+  Bonus: a `.json` file now carries its notes too.
+- **Bug found in live use:** notes were linked only to skills of *applied* changes, so re-importing a file whose
+  changes were ALREADY_PRESENT saved the notes with no skill. Now they link to every existing skill the document
+  refers to (applied or already present). The one orphaned session in my DB was linked by hand (backup taken).

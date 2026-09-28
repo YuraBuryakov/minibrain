@@ -29,4 +29,8 @@ public sealed interface Change {
 
     record SuggestSkill(String key, String name, String reason) implements Change {
     }
+
+    /** Bilingual study notes of the session, linked to the skills this import touches. */
+    record SaveSessionNotes(String topic, String notesEn, String notesRu) implements Change {
+    }
 }

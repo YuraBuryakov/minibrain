@@ -11,6 +11,7 @@ const SECTION_TITLE: Record<ImportSection, string> = {
   OPEN_QUESTIONS: 'Open questions',
   RELATIONS: 'Relations',
   SUGGESTED_SKILLS: 'Suggested skills (tick to unlock as Discovered)',
+  SESSION_NOTES: 'Study notes (saved with the skills this import touches)',
 }
 const SECTIONS = Object.keys(SECTION_TITLE) as ImportSection[]
 

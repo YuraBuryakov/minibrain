@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import sessionPrompt from './ai/session-prompt.md?raw'
 import { fetchAiContext, fetchSkillDetails, type RelationType, type SkillDetails, type SkillStatus } from './api'
+import { SessionNotesButton } from './SessionNotesButton'
 
 // Read-only Skill card. Knowledge changes arrive through imports, not through this panel.
 
@@ -53,6 +54,7 @@ function CardBody({ skill, onSelect }: { skill: SkillDetails; onSelect: (key: st
           {STATUS_TEXT[skill.status]}
         </p>
         {skill.description && <p className="card__description">{skill.description}</p>}
+        <SessionNotesButton skillKey={skill.key} skillName={skill.name} />
       </header>
 
       <StudyWithAi skillKey={skill.key} />

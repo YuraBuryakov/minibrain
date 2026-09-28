@@ -2,6 +2,7 @@ package dev.minibrain.importing.application;
 
 import dev.minibrain.importing.application.ImportPreview.Item;
 import dev.minibrain.importing.application.ImportPreview.Verdict;
+import dev.minibrain.learning.persistence.LearningSessionRepository;
 import dev.minibrain.skill.domain.Skill;
 import dev.minibrain.skill.domain.SkillStatus;
 import dev.minibrain.skill.persistence.EvidenceRepository;
@@ -12,8 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Brief §19 "apply transaction": re-runs the preview on the same text and applies the chosen READY items.
@@ -36,14 +40,17 @@ public class ImportApplier {
     private final EvidenceRepository evidence;
     private final OpenQuestionRepository questions;
     private final SkillRelationRepository relations;
+    private final LearningSessionRepository sessions;
 
     public ImportApplier(ImportPreviewer previewer, SkillRepository skills, EvidenceRepository evidence,
-                         OpenQuestionRepository questions, SkillRelationRepository relations) {
+                         OpenQuestionRepository questions, SkillRelationRepository relations,
+                         LearningSessionRepository sessions) {
         this.previewer = previewer;
         this.skills = skills;
         this.evidence = evidence;
         this.questions = questions;
         this.relations = relations;
+        this.sessions = sessions;
     }
 
     /** All or nothing: any failure rolls back every change of this import. */
@@ -58,7 +65,15 @@ public class ImportApplier {
                 .map(Item::change)
                 .sorted(Comparator.comparingInt(ImportApplier::order))
                 .toList();
-        chosen.forEach(this::apply);
+        // The session notes belong to every skill the document talks about: the ones changed now, and the ones that
+        // already had these changes (re-import, or notes arriving later). Unticked new skills are skipped at linking.
+        Set<String> touched = Stream.concat(
+                        chosen.stream().flatMap(ImportApplier::skillsOf),
+                        preview.items().stream()
+                                .filter(i -> i.verdict() == Verdict.ALREADY_PRESENT && i.skill() != null)
+                                .map(Item::skill))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        chosen.forEach(change -> apply(change, touched));
         return new Result(chosen.size(), selectedIds.size() - chosen.size());
     }
 
@@ -72,11 +87,25 @@ public class ImportApplier {
             case Change.AddQuestion c -> 4;
             case Change.ResolveQuestion c -> 5;
             case Change.AddRelation c -> 6;
+            case Change.SaveSessionNotes c -> 7; // last: every touched skill exists by now
+        };
+    }
+
+    private static Stream<String> skillsOf(Change change) {
+        return switch (change) {
+            case Change.CreateSkill c -> Stream.of(c.key());
+            case Change.SuggestSkill c -> Stream.of(c.key());
+            case Change.ChangeStatus c -> Stream.of(c.skill());
+            case Change.AddEvidence c -> Stream.of(c.skill());
+            case Change.AddQuestion c -> Stream.of(c.skill());
+            case Change.ResolveQuestion c -> Stream.of(c.skill());
+            case Change.AddRelation c -> Stream.of(c.from(), c.to());
+            case Change.SaveSessionNotes c -> Stream.empty();
         };
     }
 
     // Exhaustive switch over the sealed interface: a new Change kind will not compile until it is handled here.
-    private void apply(Change change) {
+    private void apply(Change change, Set<String> touched) {
         switch (change) {
             case Change.CreateSkill c -> skills.create(c.key(), c.name(), c.description(), c.status());
             // Choosing a suggested skill unlocks it (brief §14: it becomes a DISCOVERED skill).
@@ -92,6 +121,9 @@ public class ImportApplier {
                         .ifPresent(q -> questions.resolve(skillId, q.id()));
             }
             case Change.AddRelation c -> relations.add(id(c.from()), id(c.to()), c.type());
+            case Change.SaveSessionNotes c -> sessions.add(c.topic(), c.notesEn(), c.notesRu(), touched.stream()
+                    .flatMap(key -> skills.findByKey(key).map(Skill::id).stream()) // skip skills that were not created
+                    .toList());
         }
     }
 

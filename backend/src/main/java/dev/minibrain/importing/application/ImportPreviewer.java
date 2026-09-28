@@ -7,7 +7,9 @@ import dev.minibrain.importing.application.ImportPreview.Issue.Code;
 import dev.minibrain.importing.application.ImportPreview.Item;
 import dev.minibrain.importing.application.ImportPreview.Section;
 import dev.minibrain.importing.application.ImportPreview.Verdict;
+import dev.minibrain.importing.format.ChatNotes;
 import dev.minibrain.importing.format.UpdateDocument;
+import dev.minibrain.learning.persistence.LearningSessionRepository;
 import dev.minibrain.skill.domain.RelationType;
 import dev.minibrain.skill.domain.SkillStatus;
 import dev.minibrain.skill.query.KnowledgeGraph;
@@ -35,23 +37,34 @@ public class ImportPreviewer {
 
     private static final Pattern KEY = Pattern.compile("[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)*");
     // Pasted chat text: the JSON sits in a ```json fence, possibly after study notes that contain other code blocks.
-    private static final Pattern FENCED_UPDATE =
-            Pattern.compile("```(?:json)?\\s*(\\{.*?\"MINIBRAIN_UPDATE\".*?})\\s*```", Pattern.DOTALL);
+    // (?:(?!```).) never crosses a fence, so a ```json example inside the notes cannot swallow the real block.
+    private static final Pattern FENCED_UPDATE = Pattern.compile(
+            "```(?:json)?\\s*(\\{(?:(?!```).)*?\"MINIBRAIN_UPDATE\"(?:(?!```).)*?})\\s*```", Pattern.DOTALL);
 
     private final ObjectMapper json;
     private final KnowledgeGraphQuery graph;
     private final SkillDetailsQuery detailsQuery;
+    private final LearningSessionRepository sessions;
 
-    public ImportPreviewer(ObjectMapper json, KnowledgeGraphQuery graph, SkillDetailsQuery detailsQuery) {
+    public ImportPreviewer(ObjectMapper json, KnowledgeGraphQuery graph, SkillDetailsQuery detailsQuery,
+                           LearningSessionRepository sessions) {
         this.json = json;
         this.graph = graph;
         this.detailsQuery = detailsQuery;
+        this.sessions = sessions;
     }
 
     public ImportPreview preview(String text) {
+        String source = text == null ? "" : text;
+        var fenced = FENCED_UPDATE.matcher(source);
+        boolean pastedChat = fenced.find();
+        String jsonText = pastedChat ? fenced.group(1) : source.strip();
+        // Fallback source of study notes: the chat text above the JSON block.
+        ChatNotes chatNotes = pastedChat ? ChatNotes.extract(source.substring(0, fenced.start())).orElse(null) : null;
+
         UpdateDocument document;
         try {
-            document = json.readValue(extractJson(text), UpdateDocument.class);
+            document = json.readValue(jsonText, UpdateDocument.class);
         } catch (JsonProcessingException e) {
             return documentProblem(Code.PARSE_ERROR, "This is not valid JSON: " + e.getOriginalMessage());
         }
@@ -61,12 +74,8 @@ public class ImportPreviewer {
         if (!UpdateDocument.TYPE.equals(document.type()) || !Integer.valueOf(UpdateDocument.SCHEMA_VERSION).equals(document.schemaVersion())) {
             return documentProblem(Code.UNSUPPORTED_DOCUMENT, "Expected \"type\": \"MINIBRAIN_UPDATE\" with \"schemaVersion\": 1.");
         }
-        return new Build(document, graph.get()).run();
-    }
-
-    static String extractJson(String text) {
-        var fenced = FENCED_UPDATE.matcher(text == null ? "" : text);
-        return fenced.find() ? fenced.group(1) : (text == null ? "" : text.strip());
+        ChatNotes notes = ChatNotes.fromDocument(document).orElse(chatNotes); // the JSON's own notes win
+        return new Build(document, graph.get(), notes).run();
     }
 
     private static ImportPreview documentProblem(Code code, String message) {
@@ -77,6 +86,7 @@ public class ImportPreviewer {
     private final class Build {
 
         private final UpdateDocument document;
+        private final ChatNotes notes;
         private final Map<String, KnowledgeGraph.Node> existing = new HashMap<>();
         private final Set<String> existingRelations = new HashSet<>();
         private final Map<String, Set<RelationType>> pairTypes = new HashMap<>(); // unordered pair -> types
@@ -86,8 +96,9 @@ public class ImportPreviewer {
         private final Set<String> seen = new HashSet<>(); // in-file duplicates
         private final List<Item> items = new ArrayList<>();
 
-        Build(UpdateDocument document, KnowledgeGraph current) {
+        Build(UpdateDocument document, KnowledgeGraph current, ChatNotes notes) {
             this.document = document;
+            this.notes = notes;
             current.nodes().forEach(n -> existing.put(n.key(), n));
             current.edges().forEach(e -> {
                 existingRelations.add(e.from() + "|" + e.type() + "|" + e.to());
@@ -102,6 +113,7 @@ public class ImportPreviewer {
             orEmpty(document.changes()).forEach(this::skillChange);
             suggestedSkills();
             String topic = document.session() == null ? null : document.session().topic();
+            sessionNotes(topic);
             return new ImportPreview(topic, List.of(), List.copyOf(items));
         }
 
@@ -269,6 +281,17 @@ public class ImportPreviewer {
                 var change = issues.isEmpty() ? new Change.SuggestSkill(raw.key(), raw.name().strip(), blankToNull(raw.reason())) : null;
                 add(Section.SUGGESTED_SKILLS, raw.key(), raw.name() + " (" + raw.key() + ")", issues, change, present, true);
             }
+        }
+
+        // ---- study notes from the pasted chat text ----
+
+        private void sessionNotes(String topic) {
+            if (notes == null) return;
+            String languages = notes.en() != null && notes.ru() != null ? "English and Русский"
+                    : notes.en() != null ? "English only" : "Русский only";
+            boolean present = sessions.exists(notes.en(), notes.ru());
+            add(Section.SESSION_NOTES, null, "Study notes (" + languages + ")", List.of(),
+                    new Change.SaveSessionNotes(topic, notes.en(), notes.ru()), present, false);
         }
 
         // ---- helpers ----

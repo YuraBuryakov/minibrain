@@ -11,6 +11,7 @@ public record UpdateDocument(
         String type,
         Integer schemaVersion,
         Session session,
+        Notes notes,
         List<SkillChange> changes,
         List<NewSkill> newSkills,
         List<NewRelation> newRelations,
@@ -19,7 +20,12 @@ public record UpdateDocument(
     public static final String TYPE = "MINIBRAIN_UPDATE";
     public static final int SCHEMA_VERSION = 1;
 
-    public record Session(String topic) {
+    /** {@code notes} is also accepted here; AIs put it in either place. */
+    public record Session(String topic, Notes notes) {
+    }
+
+    /** Bilingual study notes (markdown). */
+    public record Notes(String en, String ru) {
     }
 
     public record SkillChange(

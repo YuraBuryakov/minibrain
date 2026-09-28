@@ -21,7 +21,8 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 11 | Validation (per-item issues, brief §21 + orphan / redundant relation) | ✅ done |
 | 12 | Preview / Change Set (Import dialog: paste or file, checkboxes) | ✅ done |
 | 13 | Apply (one transaction; temporary loader removed) | ✅ done |
-| 13b | Session notes as `LearningSession` + bilingual content (see Backlog) | ⬜ |
+| 13b | Session notes as `LearningSession` (EN/RU study notes, reading window from the Skill card) | ✅ done |
+| 13c | Bilingual knowledge content: names, descriptions, evidence, questions in EN/RU (see Backlog) | ⬜ |
 | 14 | Revision | ⬜ |
 | 15 | `current.json` export | ⬜ |
 | 16 | Suggested Skills / Fog concept | ⬜ |
