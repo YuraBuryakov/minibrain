@@ -48,6 +48,19 @@ export async function dismissSuggestion(key: string): Promise<void> {
   if (!response.ok) throw new Error(`Dismiss ${key} failed: ${response.status}`)
 }
 
+// Mirrors dev.minibrain.game.query.GameState: the game, computed from the revision history on every request.
+export type Title = 'STUDENT' | 'JOURNEYMAN' | 'SCHOLAR' | 'ARCHITECT' | 'MAGISTER'
+export type GameState = {
+  player: { xp: number; level: number; levelStartXp: number; nextLevelXp: number; title: Title; talentPoints: number }
+  areas: { key: string; xp: number; rank: number }[]
+}
+
+export async function fetchGame(): Promise<GameState> {
+  const response = await fetch('/api/game')
+  if (!response.ok) throw new Error(`GET /api/game failed: ${response.status}`)
+  return response.json()
+}
+
 // Mirrors dev.minibrain.skill.query.SkillDetails (the Skill card). *Ru: optional Russian version (null = use English).
 export type SkillDetails = {
   key: string

@@ -1,0 +1,52 @@
+package dev.minibrain.game.domain;
+
+import dev.minibrain.game.domain.GameReplay.Event;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class GameRulesTests {
+
+    @Test
+    void xpComesFromStatusCappedEvidenceAndResolvedQuestions() {
+        assertThat(GameRules.skillXp("DISCOVERED", 0, 0)).isZero();
+        assertThat(GameRules.skillXp("UNDERSTOOD", 2, 1)).isEqualTo(30 + 10 + 8);
+        assertThat(GameRules.skillXp("MASTERED", 9, 0)).isEqualTo(100 + 25); // evidence capped at 5
+    }
+
+    @Test
+    void levelCurveStartsLevelLAt25TimesLMinusOneSquared() {
+        assertThat(GameRules.levelFor(0)).isEqualTo(1);
+        assertThat(GameRules.levelFor(24)).isEqualTo(1);
+        assertThat(GameRules.levelFor(25)).isEqualTo(2);
+        assertThat(GameRules.levelFor(99)).isEqualTo(2);
+        assertThat(GameRules.levelFor(100)).isEqualTo(3);
+        assertThat(GameRules.xpForLevel(4)).isEqualTo(225);
+    }
+
+    @Test
+    void titlesFollowLevelBands() {
+        assertThat(GameRules.titleFor(2)).isEqualTo(GameRules.Title.STUDENT);
+        assertThat(GameRules.titleFor(3)).isEqualTo(GameRules.Title.JOURNEYMAN);
+        assertThat(GameRules.titleFor(9)).isEqualTo(GameRules.Title.SCHOLAR);
+        assertThat(GameRules.titleFor(10)).isEqualTo(GameRules.Title.ARCHITECT);
+        assertThat(GameRules.titleFor(15)).isEqualTo(GameRules.Title.MAGISTER);
+    }
+
+    @Test
+    void replaySumsSkillsIntoAreasAndLosesXpWhenAStatusGoesDown() {
+        var replay = new GameReplay();
+        replay.apply(new Event("SKILL_CREATED", "ddd", "LEARNING"));
+        replay.apply(new Event("SKILL_CREATED", "ddd.aggregate", "UNDERSTOOD"));
+        replay.apply(new Event("EVIDENCE_ADDED", "ddd.aggregate", null));
+        replay.apply(new Event("QUESTION_RESOLVED", "ddd.aggregate", null));
+        replay.apply(new Event("SKILL_CREATED", "spring.boot", "APPLIED"));
+        replay.apply(new Event("RELATION_ADDED", "ddd.aggregate", null)); // ignored
+
+        assertThat(replay.areaXp()).containsEntry("ddd", 10 + 30 + 5 + 8).containsEntry("spring", 60);
+        assertThat(replay.totalXp()).isEqualTo(113);
+
+        replay.apply(new Event("SKILL_STATUS_CHANGED", "spring.boot", "LEARNING"));
+        assertThat(replay.totalXp()).isEqualTo(63);
+    }
+}

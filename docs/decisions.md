@@ -326,3 +326,19 @@ Format: date · decision · reason · alternatives considered.
   area moves live), the drop saves it. React Flow's measured node sizes are kept and merged back into the rebuilt
   nodes: without them it treats the dragged node as uninitialized (warning #015) and the cursor jumps.
 - **Reset:** Manage → "Map layout" → back to automatic. Not done: unpin a single node, auto-arrange a cluster.
+
+### 2026-09-29 · Game layer: design, then G1 (module `game`)
+
+- **Design:** [`docs/game-design.md`](game-design.md) (brainstorm with the owner). Only demonstrated understanding
+  gives XP; the "no XP / achievements" rule is lifted for this topic. Streaks and decay stay out.
+- **Game state is computed, never stored:** `GameQuery` replays every `revision_change` oldest first into per-skill
+  progress (`GameReplay`), then derives XP, levels, titles and area ranks (`GameRules`). One path for the current
+  state and, later, for history. A lower status honestly lowers XP. Chosen over an XP ledger (Event Sourcing, rules
+  frozen) and a hybrid (stored achievements).
+- **Module `game`:** `domain` (pure rules + replay, statuses as plain names like `revision`), `query` (`GameState`),
+  `web` (`GET /api/game`). Depends on the revision table only; nothing depends on it yet.
+- **Numbers (G1):** status 0/10/30/60/100, evidence +5 (max 5 per skill), resolved question +8; level L starts at
+  25 * (L-1)^2 XP; titles by level bands; talent points = level - 1 until G2 adds spending.
+- **UI:** hero badge top right (title, level, XP bar, talent points); "Rank N · Name" under every area hub.
+  `toFlow` now takes one `view` options object instead of five positional parameters.
+- **Specs live in the repo** (`docs/`), and nothing about MiniBrain goes to the Obsidian vault (owner's call).

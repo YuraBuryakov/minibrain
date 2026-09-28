@@ -317,6 +317,60 @@
   border-width: 1.5px;
 }
 
+/* ---- hero badge (game) ---- */
+
+.hero {
+  min-width: 200px;
+  padding: 10px 14px;
+  border: 1px solid var(--bronze-dim);
+  border-radius: 4px;
+  background: var(--night);
+  color: var(--bone);
+}
+
+.hero p {
+  margin: 0;
+}
+
+.hero__title {
+  font-family: 'IM Fell English SC', Georgia, serif;
+  font-size: 22px;
+  color: var(--parchment);
+}
+
+.hero__level,
+.hero__xp,
+.hero__points {
+  font-size: 15px;
+  color: var(--bone-dim);
+}
+
+.hero__points {
+  color: var(--gilded);
+}
+
+.hero__bar {
+  height: 6px;
+  margin: 6px 0 4px;
+  border-radius: 3px;
+  background: var(--abyss);
+  overflow: hidden;
+}
+
+.hero__bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--bronze), var(--gilded));
+}
+
+.orb__rank {
+  display: block;
+  margin-top: 2px;
+  font-family: Georgia, serif;
+  font-size: 13px;
+  color: var(--bone-dim);
+}
+
 /* ---- legend ---- */
 
 .legend__hint {

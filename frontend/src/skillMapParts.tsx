@@ -1,11 +1,12 @@
 import { BaseEdge, Handle, Position, type Edge, type EdgeProps, type Node, type NodeProps } from '@xyflow/react'
 import type { SkillStatus } from './api'
+import { useT } from './i18n'
 import { convexHull } from './layout'
 
 // Custom React Flow node and edge renderers for the skill tree. Styling lives in skillMap.css.
 
-export type SkillNodeData = { name: string; status: SkillStatus; hub: boolean }
-export type AreaNodeData = { name: string }
+export type SkillNodeData = { name: string; status: SkillStatus; hub: boolean; rank?: number }
+export type AreaNodeData = { name: string; rank?: number }
 export type FogNodeData = { name: string }
 export type RuneEdgeData = { sourceRadius: number; targetRadius: number }
 
@@ -25,11 +26,22 @@ function CentreHandles() {
   )
 }
 
+// "Rank 3 · Adept" under an area hub (game); ranks above 5 keep the Master name.
+function RankLine({ rank }: { rank?: number }) {
+  const t = useT()
+  if (!rank) return null
+  const name = t(`rank.${Math.min(rank, 5) as 1 | 2 | 3 | 4 | 5}`)
+  return <small className="orb__rank">{t('rank.line', { n: rank, name })}</small>
+}
+
 function SkillOrb({ data }: NodeProps<SkillNode>) {
   return (
     <div className={`orb orb--${data.status.toLowerCase()}${data.hub ? ' orb--hub' : ''}`} title={`${data.name}: ${data.status.toLowerCase()}`}>
       <CentreHandles />
-      <span className={data.hub ? 'orb__label orb__label--area' : 'orb__label'}>{data.name}</span>
+      <span className={data.hub ? 'orb__label orb__label--area' : 'orb__label'}>
+        {data.name}
+        {data.hub && <RankLine rank={data.rank} />}
+      </span>
     </div>
   )
 }
@@ -49,7 +61,10 @@ function AreaSigil({ data }: NodeProps<AreaNode>) {
   return (
     <div className="sigil">
       <CentreHandles />
-      <span className="orb__label orb__label--area">{data.name}</span>
+      <span className="orb__label orb__label--area">
+        {data.name}
+        <RankLine rank={data.rank} />
+      </span>
     </div>
   )
 }

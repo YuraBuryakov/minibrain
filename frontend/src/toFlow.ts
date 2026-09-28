@@ -43,13 +43,16 @@ function litIds(graph: KnowledgeGraph, selectedKey: string | null, statuses: Rea
   return lit
 }
 
-export function toFlow(
-  graph: KnowledgeGraph,
-  selectedKey: string | null,
-  lang: Lang,
-  statuses: ReadonlySet<SkillStatus> = new Set(),
-  pins: ReadonlyMap<string, Point> = new Map(),
-): { nodes: Node[]; edges: Edge[] } {
+export type FlowView = {
+  selectedKey: string | null
+  lang: Lang
+  statuses?: ReadonlySet<SkillStatus>
+  pins?: ReadonlyMap<string, Point>
+  ranks?: ReadonlyMap<string, number> // area key -> rank (game)
+}
+
+export function toFlow(graph: KnowledgeGraph, view: FlowView): { nodes: Node[]; edges: Edge[] } {
+  const { selectedKey, lang, statuses = new Set<SkillStatus>(), pins = new Map<string, Point>(), ranks = new Map<string, number>() } = view
   const layout = applyPins(radialLayout(graph.nodes), pins)
   const { areas, positions } = layout
   const hubOf = new Map(areas.flatMap((a) => a.members.map((m) => [m, hubIdOf(a)] as [string, string])))
@@ -65,7 +68,7 @@ export function toFlow(
     if (area.hubSkillKey) continue // the skill itself is the hub
     const id = `area:${area.name}`
     radiusOf.set(id, RADIUS.hub)
-    nodes.push({ id, type: 'area', position: area.hub, data: { name: titleCase(area.name) }, selectable: false, draggable: true, className: dim(id) })
+    nodes.push({ id, type: 'area', position: area.hub, data: { name: titleCase(area.name), rank: ranks.get(area.name) }, selectable: false, draggable: true, className: dim(id) })
   }
 
   for (const skill of graph.nodes) {
@@ -75,7 +78,7 @@ export function toFlow(
       id: skill.key,
       type: 'skill',
       position: positions.get(skill.key)!,
-      data: { name: pick(lang, skill.name, skill.nameRu), status: skill.status, hub },
+      data: { name: pick(lang, skill.name, skill.nameRu), status: skill.status, hub, rank: hub ? ranks.get(skill.key) : undefined },
       selected: skill.key === selectedKey,
       draggable: true,
       className: dim(skill.key),

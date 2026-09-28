@@ -2,8 +2,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { Controls, Panel, ReactFlow, ViewportPortal, type Node, type NodeChange, type NodeDimensionChange, type ReactFlowInstance } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { fetchGraph, fetchPositions, pinPosition, type NodePosition, type RelationType, type SkillStatus } from './api'
+import { fetchGame, fetchGraph, fetchPositions, pinPosition, type NodePosition, type RelationType, type SkillStatus } from './api'
 import { initialLang, LangContext, pick, saveLang, useT, type Lang } from './i18n'
+import { HeroBadge } from './HeroBadge'
 import { ImportButton } from './ImportDialog'
 import { ManageButton } from './ManageDialog'
 import { SkillCard } from './SkillCard'
@@ -43,9 +44,12 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
   const pins = useMemo(() => new Map((positions.data ?? []).map((p) => [p.id, { x: p.x, y: p.y }])), [positions.data])
   const movePin = (pin: NodePosition) =>
     queryClient.setQueryData<NodePosition[]>(['positions'], (old = []) => [...old.filter((p) => p.id !== pin.id), pin])
+  // The game (G1): area ranks go under the hubs.
+  const game = useQuery({ queryKey: ['game'], queryFn: fetchGame })
+  const ranks = useMemo(() => new Map((game.data?.areas ?? []).map((a) => [a.key, a.rank])), [game.data])
   const flow = useMemo(
-    () => (graph.data ? toFlow(graph.data, selected, lang, statuses, pins) : null),
-    [graph.data, selected, lang, statuses, pins],
+    () => (graph.data ? toFlow(graph.data, { selectedKey: selected, lang, statuses, pins, ranks }) : null),
+    [graph.data, selected, lang, statuses, pins, ranks],
   )
   const toggleStatus = (status: SkillStatus) =>
     setStatuses((current) => {
@@ -118,6 +122,9 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
         <ViewportPortal>
           <FogOfWar known={known} />
         </ViewportPortal>
+        <Panel position="top-right">
+          <HeroBadge />
+        </Panel>
         <Controls showInteractive={false} />
         <Panel position="top-left" className="map-toolbar">
           <SkillSearch graph={graph.data} onSelect={setSelected} />

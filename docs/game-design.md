@@ -53,8 +53,8 @@ Per skill, from its state at a given moment:
 
 ## 5. Levels, ranks, titles
 
-- Level `n` needs `25 * n^2` XP (25, 100, 225, 400, 625, ...), same curve for the character and for areas.
-  Level 1 = 0 XP.
+- Level `L` starts at `25 * (L - 1)^2` XP: level 1 at 0, level 2 at 25, level 3 at 100, level 4 at 225, level 5 at
+  400, ... Same curve for the character and for areas.
 - **Area rank** = area level, named: 1 Novice, 2 Apprentice, 3 Adept, 4 Expert, 5+ Master (RU: Новичок, Ученик,
   Адепт, Эксперт, Мастер). Shown under the hub ("DDD · Adept") and as rings around it.
 - **Character title** by level: 1-2 Student, 3-5 Journeyman, 6-9 Scholar, 10-14 Architect, 15+ Magister
