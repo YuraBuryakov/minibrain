@@ -3,6 +3,8 @@ package dev.minibrain.importing.application;
 import dev.minibrain.importing.application.ImportPreview.Item;
 import dev.minibrain.importing.application.ImportPreview.Verdict;
 import dev.minibrain.learning.persistence.LearningSessionRepository;
+import dev.minibrain.revision.domain.RevisionChange;
+import dev.minibrain.revision.persistence.RevisionRepository;
 import dev.minibrain.skill.domain.Skill;
 import dev.minibrain.skill.domain.SkillStatus;
 import dev.minibrain.skill.persistence.EvidenceRepository;
@@ -41,16 +43,18 @@ public class ImportApplier {
     private final OpenQuestionRepository questions;
     private final SkillRelationRepository relations;
     private final LearningSessionRepository sessions;
+    private final RevisionRepository revisions;
 
     public ImportApplier(ImportPreviewer previewer, SkillRepository skills, EvidenceRepository evidence,
                          OpenQuestionRepository questions, SkillRelationRepository relations,
-                         LearningSessionRepository sessions) {
+                         LearningSessionRepository sessions, RevisionRepository revisions) {
         this.previewer = previewer;
         this.skills = skills;
         this.evidence = evidence;
         this.questions = questions;
         this.relations = relations;
         this.sessions = sessions;
+        this.revisions = revisions;
     }
 
     /** All or nothing: any failure rolls back every change of this import. */
@@ -74,6 +78,8 @@ public class ImportApplier {
                                 .map(Item::skill))
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         chosen.forEach(change -> apply(change, touched));
+        // Knowledge changes create a Revision (brief §22), inside the same transaction as the changes.
+        revisions.record(RevisionRepository.Source.IMPORT, preview.topic(), chosen.stream().map(ImportApplier::toRevision).toList());
         return new Result(chosen.size(), selectedIds.size() - chosen.size());
     }
 
@@ -136,6 +142,21 @@ public class ImportApplier {
                     .flatMap(key -> skills.findByKey(key).map(Skill::id).stream()) // skip skills that were not created
                     .toList());
         }
+    }
+
+    /** The history entry for an applied change. Exhaustive: a new Change kind must say how it is remembered. */
+    private static RevisionChange toRevision(Change change) {
+        return switch (change) {
+            case Change.CreateSkill c -> RevisionChange.skillCreated(c.key(), c.status().name(), c.name());
+            case Change.SuggestSkill c -> RevisionChange.skillCreated(c.key(), SkillStatus.DISCOVERED.name(), c.name());
+            case Change.ChangeStatus c -> RevisionChange.statusChanged(c.skill(), c.from().name(), c.to().name());
+            case Change.AddEvidence c -> RevisionChange.evidenceAdded(c.skill(), c.text());
+            case Change.AddQuestion c -> RevisionChange.questionAdded(c.skill(), c.text());
+            case Change.ResolveQuestion c -> RevisionChange.questionResolved(c.skill(), c.text());
+            case Change.AddRelation c -> RevisionChange.relationAdded(c.from(), c.type().name(), c.to());
+            case Change.Translate c -> RevisionChange.translationAdded(c.skill(), c.target().name().toLowerCase() + ": " + c.ru());
+            case Change.SaveSessionNotes c -> RevisionChange.notesSaved(c.topic());
+        };
     }
 
     private long id(String key) {

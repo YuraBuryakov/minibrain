@@ -1,5 +1,8 @@
 package dev.minibrain.skill.web;
 
+import dev.minibrain.revision.domain.RevisionChange;
+import dev.minibrain.revision.persistence.RevisionRepository;
+import dev.minibrain.revision.persistence.RevisionRepository.Source;
 import dev.minibrain.skill.domain.Skill;
 import dev.minibrain.skill.domain.SkillStatus;
 import dev.minibrain.skill.persistence.SkillRepository;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -30,21 +34,27 @@ public class SkillController {
     private final SkillRepository skills;
     private final SkillDetailsQuery detailsQuery;
     private final AiContextQuery contextQuery;
+    private final RevisionRepository revisions;
 
-    public SkillController(SkillRepository skills, SkillDetailsQuery detailsQuery, AiContextQuery contextQuery) {
+    public SkillController(SkillRepository skills, SkillDetailsQuery detailsQuery, AiContextQuery contextQuery,
+                           RevisionRepository revisions) {
         this.skills = skills;
         this.detailsQuery = detailsQuery;
         this.contextQuery = contextQuery;
+        this.revisions = revisions;
     }
 
     @PostMapping
+    @Transactional
     @ResponseStatus(HttpStatus.CREATED)
     public Skill create(@RequestBody CreateSkillRequest request) {
         if (isBlank(request.key()) || isBlank(request.name())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key and name are required");
         }
         SkillStatus status = request.status() != null ? request.status() : SkillStatus.DISCOVERED;
-        return skills.create(request.key(), request.name(), request.description(), status);
+        Skill skill = skills.create(request.key(), request.name(), request.description(), status);
+        revisions.record(Source.MANUAL, null, List.of(RevisionChange.skillCreated(skill.key(), status.name(), skill.name())));
+        return skill;
     }
 
     @GetMapping

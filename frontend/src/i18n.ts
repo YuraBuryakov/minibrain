@@ -88,6 +88,20 @@ const en = {
   'manage.loading': 'Looking for untranslated texts…',
   'manage.importAnswer': 'Import the AI answer',
   'manage.back': 'Back to Manage',
+  history: 'History',
+  'history.empty': 'No changes recorded yet.',
+  'history.changes': '{n} changes',
+  'history.source.INITIAL': 'Initial state',
+  'history.source.IMPORT': 'Import',
+  'history.source.MANUAL': 'Manual',
+  'history.SKILL_CREATED': 'New skill',
+  'history.SKILL_STATUS_CHANGED': 'Status',
+  'history.EVIDENCE_ADDED': 'Evidence',
+  'history.QUESTION_ADDED': 'Question',
+  'history.QUESTION_RESOLVED': 'Question resolved',
+  'history.RELATION_ADDED': 'Relation',
+  'history.TRANSLATION_ADDED': 'Translation',
+  'history.NOTES_SAVED': 'Study notes',
 }
 
 type Key = keyof typeof en
@@ -175,6 +189,20 @@ const ru: Record<Key, string> = {
   'manage.loading': 'Ищу непереведённые тексты…',
   'manage.importAnswer': 'Импортировать ответ AI',
   'manage.back': 'Назад в «Управление»',
+  history: 'История',
+  'history.empty': 'Изменений пока нет.',
+  'history.changes': 'изменений: {n}',
+  'history.source.INITIAL': 'Начальное состояние',
+  'history.source.IMPORT': 'Импорт',
+  'history.source.MANUAL': 'Вручную',
+  'history.SKILL_CREATED': 'Новый навык',
+  'history.SKILL_STATUS_CHANGED': 'Статус',
+  'history.EVIDENCE_ADDED': 'Доказательство',
+  'history.QUESTION_ADDED': 'Вопрос',
+  'history.QUESTION_RESOLVED': 'Вопрос закрыт',
+  'history.RELATION_ADDED': 'Связь',
+  'history.TRANSLATION_ADDED': 'Перевод',
+  'history.NOTES_SAVED': 'Конспект',
 }
 
 const dictionaries: Record<Lang, Record<Key, string>> = { en, ru }

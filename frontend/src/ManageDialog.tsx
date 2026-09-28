@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import translatePrompt from './ai/translate-prompt.md?raw'
 import { fetchMissingTranslations, type TranslationRequest } from './api'
 import { useT } from './i18n'
+import { HistorySection } from './HistorySection'
 import { ImportBody } from './ImportDialog'
 
 // "Manage" window. First section: export texts without a Russian version for an AI to translate
@@ -123,6 +124,8 @@ function ManageBody({ onClose }: { onClose: () => void }) {
           </>
         )}
       </section>
+
+      <HistorySection />
     </div>
   )
 }

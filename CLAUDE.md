@@ -68,7 +68,7 @@ Modules by feature at the top, thin layers inside (DDD-lite, see `docs/decisions
 
 ```text
 backend/src/main/java/dev/minibrain/
-├── <module>/                 skill, importing, learning today; revision later (brief §50)
+├── <module>/                 skill, importing, learning, revision (brief §50)
 │   ├── domain/               the model: records, enums, value objects, domain rules
 │   ├── persistence/          *Repository: JdbcClient + SQL, row mapping (write side + simple reads)
 │   ├── query/                read models for screens: *Query + its result records (own SQL)

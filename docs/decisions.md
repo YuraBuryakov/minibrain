@@ -250,3 +250,18 @@ Format: date · decision · reason · alternatives considered.
 - Only EN → RU for now (Russian-only texts are stored as the primary text, so the reverse gap barely exists).
 - The window is where later maintenance goes (backups, `current.json` export).
 - **Import inside Manage:** the Manage window has an "Import the AI answer" button that runs the same import flow (`ImportBody`) in place and returns to Manage with a refreshed list.
+
+### 2026-09-28 · Step 14: Revision history (module `revision`)
+
+- **Decision:** append-only tables `revision` (source INITIAL / IMPORT / MANUAL, topic, time) and `revision_change`
+  (type, skill key, from/to status, text, related key, relation type, `occurred_at`). Plain columns, not a JSON blob,
+  so "growth over time" stays simple SQL for the future game charts. Skills are referenced by key, not id.
+  Not Event Sourcing: current state stays in the knowledge tables (brief §22).
+- **Who writes:** the import (one revision per Apply, same transaction; nothing when nothing changed) and the manual
+  REST endpoints (one revision per call, `@Transactional` on the controller method; an idempotent re-resolve writes
+  nothing). Rule from CLAUDE.md: knowledge changes create a Revision.
+- **Initial state:** migration V7 rebuilds one INITIAL revision from existing rows with their real timestamps.
+  Status history before V7 is unknown, so SKILL_CREATED carries the status at migration time.
+- **No module cycle:** `revision` stores statuses / relation types as plain names and depends on no other module;
+  `skill` and `importing` write into it.
+- **UI:** "History" section in the Manage window (native `<details>` per revision).

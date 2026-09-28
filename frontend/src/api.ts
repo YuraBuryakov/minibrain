@@ -102,3 +102,23 @@ export async function fetchMissingTranslations(skill?: string): Promise<Translat
   if (!response.ok) throw new Error(`GET missing translations failed: ${response.status}`)
   return response.json()
 }
+
+// Mirrors dev.minibrain.revision.persistence.RevisionRepository.Revision (history, newest first).
+export type RevisionChange = {
+  type: 'SKILL_CREATED' | 'SKILL_STATUS_CHANGED' | 'EVIDENCE_ADDED' | 'QUESTION_ADDED' | 'QUESTION_RESOLVED'
+    | 'RELATION_ADDED' | 'TRANSLATION_ADDED' | 'NOTES_SAVED'
+  skillKey: string | null
+  fromStatus: SkillStatus | null
+  toStatus: SkillStatus | null
+  text: string | null
+  relatedKey: string | null
+  relationType: RelationType | null
+  occurredAt: string
+}
+export type Revision = { id: number; source: 'INITIAL' | 'IMPORT' | 'MANUAL'; topic: string | null; createdAt: string; changes: RevisionChange[] }
+
+export async function fetchRevisions(limit = 30): Promise<Revision[]> {
+  const response = await fetch(`/api/revisions?limit=${limit}`)
+  if (!response.ok) throw new Error(`GET revisions failed: ${response.status}`)
+  return response.json()
+}

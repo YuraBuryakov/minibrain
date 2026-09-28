@@ -1,5 +1,8 @@
 package dev.minibrain.skill.web;
 
+import dev.minibrain.revision.domain.RevisionChange;
+import dev.minibrain.revision.persistence.RevisionRepository;
+import dev.minibrain.revision.persistence.RevisionRepository.Source;
 import dev.minibrain.skill.domain.RelationType;
 import dev.minibrain.skill.domain.Skill;
 import dev.minibrain.skill.domain.SkillRelation;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -26,13 +30,16 @@ public class SkillRelationController {
 
     private final SkillRepository skills;
     private final SkillRelationRepository relations;
+    private final RevisionRepository revisions;
 
-    public SkillRelationController(SkillRepository skills, SkillRelationRepository relations) {
+    public SkillRelationController(SkillRepository skills, SkillRelationRepository relations, RevisionRepository revisions) {
         this.skills = skills;
         this.relations = relations;
+        this.revisions = revisions;
     }
 
     @PostMapping
+    @Transactional
     @ResponseStatus(HttpStatus.CREATED)
     public SkillRelation add(@PathVariable String key, @RequestBody AddRelationRequest request) {
         if (request.type() == null || request.to() == null || request.to().isBlank()) {
@@ -42,6 +49,7 @@ public class SkillRelationController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "a skill cannot relate to itself");
         }
         relations.add(skill(key).id(), skill(request.to()).id(), request.type());
+        revisions.record(Source.MANUAL, null, List.of(RevisionChange.relationAdded(key, request.type().name(), request.to())));
         return new SkillRelation(key, request.type(), request.to());
     }
 

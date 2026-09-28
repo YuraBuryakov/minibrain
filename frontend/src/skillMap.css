@@ -900,3 +900,53 @@
 .manage__list .import__secondary {
   padding: 4px 10px;
 }
+
+/* ---- history ---- */
+
+.history {
+  max-height: 40vh;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history > li {
+  border-bottom: 1px solid rgba(94, 74, 51, 0.4);
+}
+
+.history summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.history summary:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 2px;
+}
+
+.history summary time,
+.history summary small {
+  color: var(--bone-dim);
+  font-size: 15px;
+}
+
+.history__source {
+  color: var(--bronze);
+}
+
+.history__changes {
+  margin: 0 0 10px;
+  padding-left: 22px;
+  font-size: 15px;
+  color: var(--bone);
+}
+
+.history__changes b {
+  color: var(--parchment);
+  font-weight: inherit;
+}

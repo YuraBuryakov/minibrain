@@ -24,7 +24,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 13b | Session notes as `LearningSession` (EN/RU study notes, reading window from the Skill card) | ✅ done |
 | 13c | Bilingual knowledge (EN/RU columns, MINIBRAIN_UPDATE v2) + UI language switch | ✅ done |
 | 13d | Manage window: export untranslated texts for AI (all / file / per skill), `translations` import | ✅ done |
-| 14 | Revision | ⬜ |
+| 14 | Revision (module `revision`, history in Manage, initial state rebuilt) | ✅ done |
 | 15 | `current.json` export | ⬜ |
 | 16 | Suggested Skills / Fog concept | ⬜ |
 | 17 | Focus mode / search | ⬜ |
