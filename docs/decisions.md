@@ -106,3 +106,13 @@ Format: date · decision · reason · alternatives considered.
 - **Alternatives:** package per sub-feature without layers (hides the domain boundary); full hexagonal with ports
   and application services (pass-through layers and one-implementation interfaces today).
 - **Cost:** repositories and domain types are `public` across sub-packages.
+
+### 2026-09-28 · Step 7: minimal Skill Map
+
+- **Decision:** `frontend/` from Vite `react-ts` template; `@xyflow/react` (React Flow 12) + `@tanstack/react-query`.
+  Vite dev proxy `/api` → `localhost:8080`, so the backend has no CORS config.
+- **Adapter:** `toFlow(graph)` is the only place with React Flow types; `api.ts` mirrors the backend read model.
+- **Temporary layout:** status columns (DISCOVERED → MASTERED, left to right), edges right → left handles with arrows.
+  Edges pointing to a lower-status column curve around nodes; real hybrid AUTO/PINNED layout is step 18.
+- **TanStack Query now, not later:** listed in the brief and needed from step 8 (Skill card, refetch after changes).
+- **No frontend tests yet:** the build (`tsc -b`) typechecks the adapter; add Vitest when frontend logic grows.

@@ -1,0 +1,12 @@
+/* React Flow needs a parent with an explicit size: the map fills the whole window. */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+.message {
+  padding: 1rem;
+}

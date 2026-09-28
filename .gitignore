@@ -28,3 +28,9 @@ Thumbs.db
 # Env
 .env
 .env.local
+
+# Playwright MCP screenshots / logs
+.playwright-mcp/
+
+# dev.ps1 logs
+logs/

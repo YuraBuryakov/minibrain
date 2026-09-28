@@ -44,7 +44,7 @@ Hard rules:
 
 ```text
 backend/     Spring Boot (Java 21, Maven, Spring JDBC, SQLite)
-frontend/    React + TypeScript + Vite   (not created yet — roadmap step 7)
+frontend/    React + TypeScript + Vite, React Flow, TanStack Query
 docs/        brief, roadmap, decisions log
 data/        minibrain.db (runtime, not in Git)
 exports/     current.json + snapshots/ (portable, may be in Git)
@@ -103,8 +103,29 @@ Rules of thumb:
 
 ## Running
 
+**Claude starts and stops the app on my command** (I do not run it by hand):
+
+| I say | Claude runs |
+|---|---|
+| "запусти" / "start" | `powershell -ExecutionPolicy Bypass -File dev.ps1 start` (backend + frontend, waits until ready, opens browser) |
+| "останови" / "stop" | `powershell -ExecutionPolicy Bypass -File dev.ps1 stop` (kills by port, whole process tree) |
+| "статус" / "status" | `powershell -ExecutionPolicy Bypass -File dev.ps1 status` |
+
+Logs: `logs/backend.log`, `logs/frontend.log`. `start` uses the real `data/minibrain.db`; for demos with fake
+data Claude uses a scratch DB via `MINIBRAIN_DB_URL`, never the real one.
+
+Manual equivalents:
+
 ```bash
 cd backend
 mvn spring-boot:run      # http://localhost:8080
 mvn test
+
+cd frontend
+npm install              # first time only
+npm run dev              # http://localhost:5173, /api is proxied to :8080
+npm run build            # typecheck + production build
 ```
+
+Frontend layout: `src/api.ts` mirrors backend read models (fetch + types); `src/toFlow.ts` is the only
+place where React Flow types appear.
