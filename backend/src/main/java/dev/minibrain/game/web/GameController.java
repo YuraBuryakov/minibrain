@@ -2,6 +2,8 @@ package dev.minibrain.game.web;
 
 import dev.minibrain.game.query.GameQuery;
 import dev.minibrain.game.query.GameState;
+import dev.minibrain.game.query.Quest;
+import dev.minibrain.game.query.QuestsQuery;
 import dev.minibrain.skill.application.SuggestionUnlocker;
 import dev.minibrain.skill.domain.Skill;
 import org.springframework.http.HttpStatus;
@@ -13,20 +15,30 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @RestController
 public class GameController {
 
     private final GameQuery game;
     private final SuggestionUnlocker unlocker;
+    private final QuestsQuery quests;
 
-    public GameController(GameQuery game, SuggestionUnlocker unlocker) {
+    public GameController(GameQuery game, SuggestionUnlocker unlocker, QuestsQuery quests) {
         this.game = game;
         this.unlocker = unlocker;
+        this.quests = quests;
     }
 
     @GetMapping("/api/game")
     public GameState game() {
         return game.get();
+    }
+
+    /** Every open question on the map (docs/game-design.md §10). Finished only through an AI session. */
+    @GetMapping("/api/quests")
+    public List<Quest> quests() {
+        return quests.all();
     }
 
     /** Spends a talent point to open a topic from the fog (docs/game-design.md §6). */

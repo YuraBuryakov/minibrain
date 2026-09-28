@@ -1009,3 +1009,173 @@ export async function unlockSuggestion(key: string): Promise<void> {
 - [ ] **Step 10: Live check on a scratch DB copy**: V10 applies; unlock spends a point (badge 5 -> 4); History shows
   "Открыт из тумана".
 - [ ] **Step 11: Docs** (roadmap G2 done, decisions entry), owner review, then commit.
+
+
+---
+
+# Game layer G3 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** A "Quests (N)" window lists every open question on the map, grouped by area; a row selects its skill,
+"Take quest" copies the AI session context with the goal = the question.
+
+**Architecture:** New read model `game/query/QuestsQuery` (one SQL over `open_question JOIN skill`, area via
+`GameRules.areaOf`) served at `GET /api/quests`. The frontend mirrors it, extracts the clipboard logic of
+`StudyWithAi` into `copyAiSession(key, goal)` (shared by the card and the quests window) and adds `QuestsDialog`
+with a toolbar button.
+
+**Spec:** [`docs/game-design.md`](game-design.md) §10.
+
+## Global Constraints
+
+- Everything from the G1 / G2 constraints above still applies.
+- A quest is finished only through an AI session (`openQuestionsResolved`), never by a button: no XP for clicks.
+- Nothing is stored: the quest list is the open questions, read on every request.
+- Order: area, then skill key, then question id (oldest first).
+- Reward shown per row = `GameRules.QUESTION_XP` (+8), sent by the backend so the number lives in one place.
+- Area label on the frontend: the hub skill's name if a skill with key = area exists, else the area key.
+
+## File structure
+
+| File | Change |
+|---|---|
+| `backend/src/main/java/dev/minibrain/game/query/Quest.java` | New: one row of the read model |
+| `backend/src/main/java/dev/minibrain/game/query/QuestsQuery.java` | New: SQL over open questions |
+| `backend/src/main/java/dev/minibrain/game/web/GameController.java` | `GET /api/quests` |
+| `backend/src/test/java/dev/minibrain/game/query/QuestsQueryTests.java` | New: import -> `/api/quests` |
+| `frontend/src/api.ts` | `Quest` type + `fetchQuests()` |
+| `frontend/src/aiSession.ts` | New: `copyAiSession(key, goal)` (moved out of `SkillCard`) |
+| `frontend/src/SkillCard.tsx` | `StudyWithAi` uses `copyAiSession` |
+| `frontend/src/QuestsDialog.tsx` | New: button + window |
+| `frontend/src/App.tsx` | Button in the toolbar, selection callback |
+| `frontend/src/i18n.ts`, `frontend/src/skillMap.css` | Strings, styles |
+
+---
+
+### Task 1: `GET /api/quests` read model
+
+**Files:**
+- Create: `backend/src/main/java/dev/minibrain/game/query/Quest.java`
+- Create: `backend/src/main/java/dev/minibrain/game/query/QuestsQuery.java`
+- Modify: `backend/src/main/java/dev/minibrain/game/web/GameController.java`
+- Test: `backend/src/test/java/dev/minibrain/game/query/QuestsQueryTests.java`
+
+**Interfaces:**
+- Produces: `record Quest(String area, String skillKey, String skillName, String skillNameRu, String question,
+  String questionRu, int xp)`, `QuestsQuery.all(): List<Quest>`, `GET /api/quests` -> `Quest[]`.
+
+- [ ] **Step 1: Write the failing test** (own key prefix `qq`, shared in-memory DB: filter by prefix)
+
+```java
+@SpringBootTest(properties = "spring.datasource.url=jdbc:sqlite::memory:")
+@AutoConfigureMockMvc
+class QuestsQueryTests {
+
+    @Autowired ImportPreviewer previewer;
+    @Autowired ImportApplier applier;
+    @Autowired QuestsQuery quests;
+    @Autowired MockMvc mvc;
+
+    @Test
+    void listsOnlyOpenQuestionsGroupedByAreaThenSkill() throws Exception {
+        apply("""
+                { "type": "MINIBRAIN_UPDATE", "schemaVersion": 2,
+                  "newSkills": [ { "key": "qq", "name": "Quests", "status": "LEARNING" },
+                                 { "key": "qq.b", "name": "Bravo", "status": "LEARNING" },
+                                 { "key": "qq.a", "name": "Alpha", "status": "LEARNING" } ],
+                  "changes": [ { "skill": "qq.b", "openQuestionsAdded": ["Why B?"] },
+                               { "skill": "qq.a", "openQuestionsAdded": ["Why A?", "Done A?"] } ] }
+                """);
+        apply("""
+                { "type": "MINIBRAIN_UPDATE", "schemaVersion": 2,
+                  "changes": [ { "skill": "qq.a", "openQuestionsResolved": ["Done A?"] } ] }
+                """);
+
+        var mine = quests.all().stream().filter(q -> q.area().equals("qq")).toList();
+        assertThat(mine).extracting(Quest::skillKey, Quest::question)
+                .containsExactly(tuple("qq.a", "Why A?"), tuple("qq.b", "Why B?"));
+        assertThat(mine).allMatch(q -> q.xp() == GameRules.QUESTION_XP);
+
+        mvc.perform(get("/api/quests"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.question == 'Why B?')].skillName").value("Bravo"));
+    }
+
+    private void apply(String update) {
+        applier.apply(update, previewer.preview(update).items().stream().filter(Item::selected).map(Item::id).collect(Collectors.toSet()));
+    }
+}
+```
+
+- [ ] **Step 2: Run it, expect compilation FAIL** (via `test-runner`: `cd backend && mvn -q test -Dtest=QuestsQueryTests`)
+
+- [ ] **Step 3: Implement**
+
+```java
+/** One open question seen as a quest (docs/game-design.md §10). *Ru: null = use English. */
+public record Quest(String area, String skillKey, String skillName, String skillNameRu,
+                    String question, String questionRu, int xp) {
+}
+```
+
+```java
+/** Every open question on the map as a quest, ordered by area, skill, then oldest first. */
+@Component
+public class QuestsQuery {
+
+    private final JdbcClient jdbc;
+
+    public QuestsQuery(JdbcClient jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    public List<Quest> all() {
+        return jdbc.sql("""
+                        SELECT s.key, s.name, s.name_ru, q.text, q.text_ru
+                        FROM open_question q JOIN skill s ON s.id = q.skill_id
+                        WHERE q.resolved_at IS NULL
+                        ORDER BY s.key, q.id
+                        """)
+                .query((rs, rowNum) -> new Quest(areaOf(rs.getString("key")), rs.getString("key"),
+                        rs.getString("name"), rs.getString("name_ru"), rs.getString("text"), rs.getString("text_ru"),
+                        QUESTION_XP))
+                .list()
+                .stream()
+                .sorted(Comparator.comparing(Quest::area)) // stable: keeps skill / id order inside an area
+                .toList();
+    }
+}
+```
+
+`GameController`: inject `QuestsQuery`, add
+
+```java
+    @GetMapping("/api/quests")
+    public List<Quest> quests() {
+        return quests.all();
+    }
+```
+
+- [ ] **Step 4: Run the test, expect PASS; run the whole suite** (via `test-runner`)
+
+### Task 2: Quests window and Take quest (frontend)
+
+**Files:** `api.ts`, new `aiSession.ts`, `SkillCard.tsx`, new `QuestsDialog.tsx`, `App.tsx`, `i18n.ts`, `skillMap.css`
+
+- [ ] **Step 1: `api.ts`**: `export type Quest = { area, skillKey, skillName, skillNameRu, question, questionRu, xp }`
+  and `fetchQuests()` (same shape as `fetchGame`).
+- [ ] **Step 2: `aiSession.ts`**: move the text building + `navigator.clipboard.writeText` from `StudyWithAi` into
+  `export async function copyAiSession(key: string, goal: string): Promise<void>` (throws on failure);
+  `StudyWithAi` calls it and keeps its own `copied / failed` state.
+- [ ] **Step 3: `QuestsDialog.tsx`**: `QuestsButton({ graph, onSelect })` in the `ManageButton` pattern (`<dialog>`,
+  body mounted only while open). The button label `Quests (N)` uses `useQuery(['quests'])`, so imports refresh it
+  (Import already invalidates all queries). Body: groups by `area` (label from the hub skill in `graph`, else the
+  key), each row: skill name (click -> `onSelect(skillKey)` and close), question (by `lang`, `pick`), `+8 XP`,
+  "Take quest" button -> `copyAiSession(skillKey, question in English)` + `onSelect`, status per row. Empty list ->
+  a hint that questions come from AI sessions.
+- [ ] **Step 4: `App.tsx`**: `<QuestsButton graph={graph.data} onSelect={setSelected} />` next to Import.
+- [ ] **Step 5: strings EN / RU, styles; `npm run build` + oxlint via `test-runner`; live check on a scratch DB copy.**
+
+Open point for Step 3: the goal copied is the question in English (the AI context is English-first); the Russian
+text is only shown in the window.
