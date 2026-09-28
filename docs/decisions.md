@@ -222,3 +222,18 @@ Format: date · decision · reason · alternatives considered.
 - **Bug found in live use:** notes were linked only to skills of *applied* changes, so re-importing a file whose
   changes were ALREADY_PRESENT saved the notes with no skill. Now they link to every existing skill the document
   refers to (applied or already present). The one orphaned session in my DB was linked by hand (backup taken).
+
+### 2026-09-28 · Step 13c: bilingual knowledge (EN / RU)
+
+- **Storage:** extra columns (`skill.name_ru`, `skill.description_ru`, `evidence.text_ru`, `open_question.text_ru`,
+  migration V6). The existing columns are English and stay the canonical text for matching; `*_ru` may be NULL.
+  Exactly two languages, so no generic translation table (every query would become JOINs).
+- **Format:** MINIBRAIN_UPDATE `schemaVersion: 2`: knowledge texts are `{ "en", "ru" }` objects
+  (`importing/format/LocalizedText`); a plain string still works and means English, so v1 files keep importing.
+  A text given only in Russian is stored as the primary text. `openQuestionsResolved` matches either language.
+- **Read side:** `KnowledgeGraph.Node`, `SkillDetails` (+ evidence, questions, relations) carry `*Ru` fields;
+  MINIBRAIN_CONTEXT stays English (v1).
+- **UI:** EN / RU switch in the toolbar (remembered in localStorage, falls back to the browser language).
+  UI texts come from a plain dictionary in `i18n.ts` (no library), passed via React context; knowledge texts use
+  `pick(lang, en, ru)` with English fallback. Server-side preview labels and issue messages stay English.
+- **Session prompt** now asks for schemaVersion 2 with bilingual texts.

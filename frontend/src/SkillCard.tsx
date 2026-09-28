@@ -1,73 +1,62 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import sessionPrompt from './ai/session-prompt.md?raw'
-import { fetchAiContext, fetchSkillDetails, type RelationType, type SkillDetails, type SkillStatus } from './api'
+import { fetchAiContext, fetchSkillDetails, type SkillDetails } from './api'
+import { LangContext, pick, useT } from './i18n'
 import { SessionNotesButton } from './SessionNotesButton'
 
 // Read-only Skill card. Knowledge changes arrive through imports, not through this panel.
 
-const STATUS_TEXT: Record<SkillStatus, string> = {
-  DISCOVERED: 'Discovered',
-  LEARNING: 'Learning',
-  UNDERSTOOD: 'Understood',
-  APPLIED: 'Applied',
-  MASTERED: 'Mastered',
-}
-
-// How a relation reads from the selected skill's side.
-const RELATION_TEXT: Record<RelationType, { outgoing: string; incoming: string }> = {
-  REQUIRES: { outgoing: 'Requires', incoming: 'Required by' },
-  LEADS_TO: { outgoing: 'Leads to', incoming: 'Comes after' },
-  PART_OF: { outgoing: 'Part of', incoming: 'Includes' },
-  RELATED_TO: { outgoing: 'Related to', incoming: 'Related to' },
-}
-
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
-
 type Props = { skillKey: string; onSelect: (key: string) => void; onClose: () => void }
 
 export function SkillCard({ skillKey, onSelect, onClose }: Props) {
+  const t = useT()
   const details = useQuery({ queryKey: ['skill', skillKey], queryFn: () => fetchSkillDetails(skillKey) })
 
   return (
-    <aside className="card" aria-label="Skill card">
-      <button type="button" className="card__close" onClick={onClose} aria-label="Close the skill card">
+    <aside className="card" aria-label={t('card.label')}>
+      <button type="button" className="card__close" onClick={onClose} aria-label={t('card.close')}>
         ×
       </button>
-      {details.isPending && <p className="card__note">Opening the tome…</p>}
-      {details.isError && <p className="card__note">Could not load this skill: {details.error.message}</p>}
+      {details.isPending && <p className="card__note">{t('card.loading')}</p>}
+      {details.isError && <p className="card__note">{t('card.loadFailed', { error: details.error.message })}</p>}
       {details.isSuccess && <CardBody key={skillKey} skill={details.data} onSelect={onSelect} />}
     </aside>
   )
 }
 
 function CardBody({ skill, onSelect }: { skill: SkillDetails; onSelect: (key: string) => void }) {
+  const t = useT()
+  const lang = useContext(LangContext)
+  const formatDate = (iso: string) => new Date(iso).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' })
   const open = skill.openQuestions.filter((q) => !q.resolvedAt)
   const closed = skill.openQuestions.filter((q) => q.resolvedAt)
+  const name = pick(lang, skill.name, skill.nameRu)
+  const description = pick(lang, skill.description, skill.descriptionRu)
 
   return (
     <>
       <header className="card__head">
-        <h1 className="card__title">{skill.name}</h1>
+        <h1 className="card__title">{name}</h1>
         <p className="card__status">
           <span className={`orb orb--${skill.status.toLowerCase()}`} />
-          {STATUS_TEXT[skill.status]}
+          {t(`status.${skill.status}`)}
         </p>
-        {skill.description && <p className="card__description">{skill.description}</p>}
-        <SessionNotesButton skillKey={skill.key} skillName={skill.name} />
+        {description && <p className="card__description">{description}</p>}
+        <SessionNotesButton skillKey={skill.key} skillName={name} />
       </header>
 
       <StudyWithAi skillKey={skill.key} />
 
       <section className="card__section">
-        <h2>What I demonstrated</h2>
+        <h2>{t('card.evidence')}</h2>
         {skill.evidence.length === 0 ? (
-          <p className="card__empty">No evidence yet. It appears after a learning session is imported.</p>
+          <p className="card__empty">{t('card.noEvidence')}</p>
         ) : (
           <ul className="card__list">
             {skill.evidence.map((e) => (
               <li key={e.text}>
-                {e.text}
+                {pick(lang, e.text, e.textRu)}
                 <time className="card__date" dateTime={e.createdAt}>{formatDate(e.createdAt)}</time>
               </li>
             ))}
@@ -76,20 +65,20 @@ function CardBody({ skill, onSelect }: { skill: SkillDetails; onSelect: (key: st
       </section>
 
       <section className="card__section">
-        <h2>Open questions</h2>
+        <h2>{t('card.questions')}</h2>
         {open.length === 0 ? (
-          <p className="card__empty">No open questions.</p>
+          <p className="card__empty">{t('card.noQuestions')}</p>
         ) : (
           <ul className="card__list">
-            {open.map((q) => <li key={q.text}>{q.text}</li>)}
+            {open.map((q) => <li key={q.text}>{pick(lang, q.text, q.textRu)}</li>)}
           </ul>
         )}
         {closed.length > 0 && (
           <ul className="card__list card__list--closed">
             {closed.map((q) => (
               <li key={q.text}>
-                {q.text}
-                <time className="card__date" dateTime={q.resolvedAt!}>Closed {formatDate(q.resolvedAt!)}</time>
+                {pick(lang, q.text, q.textRu)}
+                <time className="card__date" dateTime={q.resolvedAt!}>{t('card.closedOn', { date: formatDate(q.resolvedAt!) })}</time>
               </li>
             ))}
           </ul>
@@ -98,14 +87,14 @@ function CardBody({ skill, onSelect }: { skill: SkillDetails; onSelect: (key: st
 
       {skill.relations.length > 0 && (
         <section className="card__section">
-          <h2>Connections</h2>
+          <h2>{t('card.connections')}</h2>
           <ul className="card__relations">
             {skill.relations.map((r) => (
               <li key={`${r.outgoing}|${r.type}|${r.key}`}>
-                <span className="card__relation-type">{RELATION_TEXT[r.type][r.outgoing ? 'outgoing' : 'incoming']}</span>
+                <span className="card__relation-type">{t(r.outgoing ? `relation.${r.type}` : `relationIn.${r.type}`)}</span>
                 <button type="button" className="card__link" onClick={() => onSelect(r.key)}>
                   <span className={`orb orb--${r.status.toLowerCase()}`} />
-                  {r.name}
+                  {pick(lang, r.name, r.nameRu)}
                 </button>
               </li>
             ))}
@@ -118,6 +107,7 @@ function CardBody({ skill, onSelect }: { skill: SkillDetails; onSelect: (key: st
 
 // Copies the session instructions + MINIBRAIN_CONTEXT as one text, ready to paste into an AI chat.
 function StudyWithAi({ skillKey }: { skillKey: string }) {
+  const t = useT()
   const [goal, setGoal] = useState('')
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')
 
@@ -135,9 +125,9 @@ function StudyWithAi({ skillKey }: { skillKey: string }) {
 
   return (
     <section className="card__section">
-      <h2>Study with AI</h2>
+      <h2>{t('ai.title')}</h2>
       <label className="card__label" htmlFor="session-goal">
-        Session goal (optional)
+        {t('ai.goal')}
       </label>
       <input
         id="session-goal"
@@ -147,16 +137,15 @@ function StudyWithAi({ skillKey }: { skillKey: string }) {
           setGoal(e.target.value)
           setState('idle')
         }}
-        placeholder="e.g. learn how to choose Aggregate boundaries"
+        placeholder={t('ai.goalPlaceholder')}
       />
       <button type="button" className="card__action" onClick={copy}>
-        Copy for AI session
+        {t('ai.copy')}
       </button>
       <p className="card__hint" role="status">
-        {state === 'copied' && 'Copied. Paste it into your AI chat and start the session.'}
-        {state === 'failed' && 'Could not copy. Check that the backend is running and try again.'}
+        {state === 'copied' && t('ai.copied')}
+        {state === 'failed' && t('ai.copyFailed')}
       </p>
     </section>
   )
 }
-

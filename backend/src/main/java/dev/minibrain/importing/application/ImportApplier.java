@@ -107,12 +107,12 @@ public class ImportApplier {
     // Exhaustive switch over the sealed interface: a new Change kind will not compile until it is handled here.
     private void apply(Change change, Set<String> touched) {
         switch (change) {
-            case Change.CreateSkill c -> skills.create(c.key(), c.name(), c.description(), c.status());
+            case Change.CreateSkill c -> skills.create(c.key(), c.name(), c.nameRu(), c.description(), c.descriptionRu(), c.status());
             // Choosing a suggested skill unlocks it (brief §14: it becomes a DISCOVERED skill).
-            case Change.SuggestSkill c -> skills.create(c.key(), c.name(), c.reason(), SkillStatus.DISCOVERED);
+            case Change.SuggestSkill c -> skills.create(c.key(), c.name(), c.nameRu(), c.reason(), null, SkillStatus.DISCOVERED);
             case Change.ChangeStatus c -> skills.changeStatus(id(c.skill()), c.to());
-            case Change.AddEvidence c -> evidence.add(id(c.skill()), c.text());
-            case Change.AddQuestion c -> questions.add(id(c.skill()), c.text());
+            case Change.AddEvidence c -> evidence.add(id(c.skill()), c.text(), c.textRu());
+            case Change.AddQuestion c -> questions.add(id(c.skill()), c.text(), c.textRu());
             case Change.ResolveQuestion c -> {
                 long skillId = id(c.skill());
                 questions.findBySkillId(skillId).stream()

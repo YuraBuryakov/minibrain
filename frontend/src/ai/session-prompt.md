@@ -37,7 +37,7 @@ summary of the chat:
 ```json
 {
   "type": "MINIBRAIN_UPDATE",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "session": { "topic": "<short topic of the session>" },
   "notes": {
     "en": "### Key ideas\n- ...\n\n### Example\n...\n\n### Common mistakes\n...\n\n### What to practise next\n...",
@@ -47,19 +47,25 @@ summary of the chat:
     {
       "skill": "<existing key>",
       "proposedStatus": "UNDERSTOOD",
-      "evidenceAdded": ["<what I demonstrated, one sentence>"],
-      "openQuestionsAdded": ["<a concrete gap you noticed>"],
-      "openQuestionsResolved": ["<exact text of an open question from the context that I resolved>"]
+      "evidenceAdded": [ { "en": "<what I demonstrated, one sentence>", "ru": "<то же по-русски>" } ],
+      "openQuestionsAdded": [ { "en": "<a concrete gap you noticed>", "ru": "<то же по-русски>" } ],
+      "openQuestionsResolved": [ "<exact text of an open question from the context that I resolved>" ]
     }
   ],
   "newSkills": [
-    { "key": "area.new-skill", "name": "New Skill", "description": "<one sentence>", "status": "DISCOVERED", "reason": "<why it became its own skill>" }
+    {
+      "key": "area.new-skill",
+      "name": { "en": "New Skill", "ru": "Новый навык" },
+      "description": { "en": "<one sentence>", "ru": "<одно предложение>" },
+      "status": "DISCOVERED",
+      "reason": "<why it became its own skill>"
+    }
   ],
   "newRelations": [
     { "from": "area.new-skill", "type": "RELATED_TO", "to": "<existing or new key>" }
   ],
   "suggestedSkills": [
-    { "key": "area.next-skill", "name": "Next Skill", "reason": "<why it is a good next step>" }
+    { "key": "area.next-skill", "name": { "en": "Next Skill", "ru": "Следующий навык" }, "reason": "<why it is a good next step>" }
   ]
 }
 ```
@@ -72,7 +78,9 @@ Rules:
   Bad: "Discussed Aggregates.", anything you explained.
 - `proposedStatus` only when my answers justify it; it may also go down if my understanding turned out shallow.
   Statuses: `DISCOVERED`, `LEARNING`, `UNDERSTOOD`, `APPLIED`, `MASTERED` (rare).
-- `openQuestionsResolved`: copy the question text exactly as in the context.
+- **Every knowledge text is bilingual**: `name`, `description`, each `evidenceAdded` and `openQuestionsAdded` item
+  is an object `{ "en": "...", "ru": "..." }` with the same meaning in both languages. Keys stay English.
+- `openQuestionsResolved`: copy the question text exactly as in the context (a plain string is fine here).
 - A new skill only for an independent unit of learning, not for every term that came up.
 - Before creating a skill, check `knownSkills` in the context: if it already exists (even under a slightly
   different name), use its `key` in `changes` instead of creating a duplicate.

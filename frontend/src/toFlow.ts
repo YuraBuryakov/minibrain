@@ -1,5 +1,6 @@
 import { MarkerType, type Edge, type Node } from '@xyflow/react'
 import type { KnowledgeGraph, RelationType } from './api'
+import { pick, type Lang } from './i18n'
 import { radialLayout } from './layout'
 import { RADIUS, type RuneEdge } from './skillMapParts'
 
@@ -15,7 +16,7 @@ const ARROW_COLOR: Record<RelationType, string> = {
 
 const titleCase = (area: string) => area.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
-export function toFlow(graph: KnowledgeGraph, selectedKey: string | null = null): { nodes: Node[]; edges: Edge[] } {
+export function toFlow(graph: KnowledgeGraph, selectedKey: string | null, lang: Lang): { nodes: Node[]; edges: Edge[] } {
   const { areas, positions } = radialLayout(graph.nodes)
   const hubKeys = new Set(areas.map((a) => a.hubSkillKey).filter(Boolean))
   const radiusOf = new Map<string, number>([['core', RADIUS.core]])
@@ -36,7 +37,7 @@ export function toFlow(graph: KnowledgeGraph, selectedKey: string | null = null)
       id: skill.key,
       type: 'skill',
       position: positions.get(skill.key)!,
-      data: { name: skill.name, status: skill.status, hub },
+      data: { name: pick(lang, skill.name, skill.nameRu), status: skill.status, hub },
       selected: skill.key === selectedKey,
     })
   }

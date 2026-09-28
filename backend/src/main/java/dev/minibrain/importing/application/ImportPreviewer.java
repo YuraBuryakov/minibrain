@@ -8,6 +8,7 @@ import dev.minibrain.importing.application.ImportPreview.Item;
 import dev.minibrain.importing.application.ImportPreview.Section;
 import dev.minibrain.importing.application.ImportPreview.Verdict;
 import dev.minibrain.importing.format.ChatNotes;
+import dev.minibrain.importing.format.LocalizedText;
 import dev.minibrain.importing.format.UpdateDocument;
 import dev.minibrain.learning.persistence.LearningSessionRepository;
 import dev.minibrain.skill.domain.RelationType;
@@ -71,8 +72,8 @@ public class ImportPreviewer {
         if (document == null) {
             return documentProblem(Code.PARSE_ERROR, "The text is empty.");
         }
-        if (!UpdateDocument.TYPE.equals(document.type()) || !Integer.valueOf(UpdateDocument.SCHEMA_VERSION).equals(document.schemaVersion())) {
-            return documentProblem(Code.UNSUPPORTED_DOCUMENT, "Expected \"type\": \"MINIBRAIN_UPDATE\" with \"schemaVersion\": 1.");
+        if (!UpdateDocument.TYPE.equals(document.type()) || !UpdateDocument.SUPPORTED_VERSIONS.contains(document.schemaVersion())) {
+            return documentProblem(Code.UNSUPPORTED_DOCUMENT, "Expected \"type\": \"MINIBRAIN_UPDATE\" with \"schemaVersion\": 1 or 2.");
         }
         ChatNotes notes = ChatNotes.fromDocument(document).orElse(chatNotes); // the JSON's own notes win
         return new Build(document, graph.get(), notes).run();
@@ -130,7 +131,7 @@ public class ImportPreviewer {
                 if (!keyValid) {
                     issues.add(Issue.error(Code.INVALID_VALUE, "Key \"" + raw.key() + "\" must be lowercase words joined by '-' and '.', e.g. ddd.aggregate."));
                 }
-                if (isBlank(raw.name())) {
+                if (raw.name() == null || raw.name().isEmpty()) {
                     issues.add(Issue.error(Code.INVALID_VALUE, "Name is missing."));
                 }
                 SkillStatus status = parse(SkillStatus.class, raw.status());
@@ -144,7 +145,9 @@ public class ImportPreviewer {
                 }
                 Change.CreateSkill change = null;
                 if (issues.isEmpty()) {
-                    change = new Change.CreateSkill(raw.key(), raw.name().strip(), blankToNull(raw.description()), status);
+                    var description = raw.description() == null ? LocalizedText.of(null) : raw.description();
+                    change = new Change.CreateSkill(raw.key(), raw.name().primary(), raw.name().secondaryRu(),
+                            description.primary(), description.secondaryRu(), status);
                     newSkills.put(raw.key(), change);
                 }
                 pending.add(new PendingSkill(raw, issues, change));
@@ -157,7 +160,7 @@ public class ImportPreviewer {
             if (skill.change() != null && !linked.contains(skill.change().key())) {
                 issues.add(Issue.warning(Code.ORPHAN_SKILL, "Not connected to any skill: it will float outside the tree."));
             }
-            String label = skill.raw().name() + " (" + skill.raw().key() + "), " + skill.raw().status();
+            String label = display(skill.raw().name()) + " (" + skill.raw().key() + "), " + skill.raw().status();
             add(Section.NEW_SKILLS, skill.raw().key(), label, issues, skill.change(), false, false);
         }
 
@@ -238,30 +241,35 @@ public class ImportPreviewer {
             }
 
             Set<String> evidenceTexts = current == null ? Set.of() : new HashSet<>(current.evidence().stream().map(SkillDetails.Evidence::text).toList());
-            for (String text : nonBlank(raw.evidenceAdded())) {
-                boolean present = unknown.isEmpty() && (evidenceTexts.contains(text) || !seen.add("evidence|" + key + "|" + text));
-                add(Section.EVIDENCE, key, name + ": " + text, unknown, new Change.AddEvidence(key, text), present, false);
+            for (LocalizedText text : nonEmpty(raw.evidenceAdded())) {
+                boolean present = unknown.isEmpty() && (evidenceTexts.contains(text.primary()) || !seen.add("evidence|" + key + "|" + text.primary()));
+                add(Section.EVIDENCE, key, name + ": " + text.display(), unknown,
+                        new Change.AddEvidence(key, text.primary(), text.secondaryRu()), present, false);
             }
 
             Set<String> questionTexts = current == null ? Set.of() : new HashSet<>(current.openQuestions().stream().map(SkillDetails.Question::text).toList());
-            for (String text : nonBlank(raw.openQuestionsAdded())) {
-                boolean present = unknown.isEmpty() && (questionTexts.contains(text) || !seen.add("question|" + key + "|" + text));
-                add(Section.OPEN_QUESTIONS, key, name + ": + " + text, unknown, new Change.AddQuestion(key, text), present, false);
+            for (LocalizedText text : nonEmpty(raw.openQuestionsAdded())) {
+                boolean present = unknown.isEmpty() && (questionTexts.contains(text.primary()) || !seen.add("question|" + key + "|" + text.primary()));
+                add(Section.OPEN_QUESTIONS, key, name + ": + " + text.display(), unknown,
+                        new Change.AddQuestion(key, text.primary(), text.secondaryRu()), present, false);
             }
 
-            for (String text : nonBlank(raw.openQuestionsResolved())) {
+            for (LocalizedText text : nonEmpty(raw.openQuestionsResolved())) {
                 var issues = new ArrayList<>(unknown);
                 boolean present = false;
+                String storedText = text.primary(); // replaced by the question's stored (English) text once matched
                 if (issues.isEmpty()) {
                     var question = current == null ? Optional.<SkillDetails.Question>empty()
-                            : current.openQuestions().stream().filter(q -> q.text().equals(text)).findFirst();
+                            : current.openQuestions().stream().filter(q -> matches(q, text)).findFirst();
                     if (question.isEmpty()) {
                         issues.add(Issue.error(Code.UNKNOWN_OPEN_QUESTION, "No open question with exactly this text on " + name + "."));
                     } else {
-                        present = question.get().resolvedAt() != null || !seen.add("resolve|" + key + "|" + text);
+                        storedText = question.get().text();
+                        present = question.get().resolvedAt() != null || !seen.add("resolve|" + key + "|" + storedText);
                     }
                 }
-                add(Section.OPEN_QUESTIONS, key, name + ": resolve \"" + text + "\"", issues, new Change.ResolveQuestion(key, text), present, false);
+                add(Section.OPEN_QUESTIONS, key, name + ": resolve \"" + text.display() + "\"", issues,
+                        new Change.ResolveQuestion(key, storedText), present, false);
             }
         }
 
@@ -273,13 +281,13 @@ public class ImportPreviewer {
                 if (raw.key() == null || !KEY.matcher(raw.key()).matches()) {
                     issues.add(Issue.error(Code.INVALID_VALUE, "Key \"" + raw.key() + "\" must be lowercase words joined by '-' and '.'."));
                 }
-                if (isBlank(raw.name())) {
+                if (raw.name() == null || raw.name().isEmpty()) {
                     issues.add(Issue.error(Code.INVALID_VALUE, "Name is missing."));
                 }
                 boolean present = issues.isEmpty() && (existing.containsKey(raw.key()) || newSkills.containsKey(raw.key())
                         || !seen.add("suggested|" + raw.key()));
-                var change = issues.isEmpty() ? new Change.SuggestSkill(raw.key(), raw.name().strip(), blankToNull(raw.reason())) : null;
-                add(Section.SUGGESTED_SKILLS, raw.key(), raw.name() + " (" + raw.key() + ")", issues, change, present, true);
+                var change = issues.isEmpty() ? new Change.SuggestSkill(raw.key(), raw.name().primary(), raw.name().secondaryRu(), blankToNull(raw.reason())) : null;
+                add(Section.SUGGESTED_SKILLS, raw.key(), display(raw.name()) + " (" + raw.key() + ")", issues, change, present, true);
             }
         }
 
@@ -339,8 +347,18 @@ public class ImportPreviewer {
         return list == null ? List.of() : list;
     }
 
-    private static List<String> nonBlank(List<String> texts) {
-        return orEmpty(texts).stream().filter(t -> !isBlank(t)).map(String::strip).toList();
+    private static List<LocalizedText> nonEmpty(List<LocalizedText> texts) {
+        return orEmpty(texts).stream().filter(t -> t != null && !t.isEmpty()).toList();
+    }
+
+    /** An open question matches by its English or its Russian text. */
+    private static boolean matches(SkillDetails.Question question, LocalizedText text) {
+        return question.text().equals(text.en()) || question.text().equals(text.ru())
+                || (question.textRu() != null && (question.textRu().equals(text.en()) || question.textRu().equals(text.ru())));
+    }
+
+    private static String display(LocalizedText text) {
+        return text == null ? "null" : text.display();
     }
 
     private static boolean isBlank(String s) {

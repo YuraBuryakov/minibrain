@@ -1,21 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { applyImport, previewImport, type ImportItem, type ImportPreview, type ImportSection } from './api'
+import { useT } from './i18n'
 
 // Import a MINIBRAIN_UPDATE: paste text or pick a file -> preview with checkboxes -> apply the ticked items.
 
-const SECTION_TITLE: Record<ImportSection, string> = {
-  NEW_SKILLS: 'New skills',
-  STATUS_CHANGES: 'Status changes',
-  EVIDENCE: 'Evidence',
-  OPEN_QUESTIONS: 'Open questions',
-  RELATIONS: 'Relations',
-  SUGGESTED_SKILLS: 'Suggested skills (tick to unlock as Discovered)',
-  SESSION_NOTES: 'Study notes (saved with the skills this import touches)',
-}
-const SECTIONS = Object.keys(SECTION_TITLE) as ImportSection[]
+// Display order; titles come from the i18n dictionary ("section.*").
+// Server-side labels and issue messages stay in English (they quote the imported texts anyway).
+const SECTIONS: ImportSection[] = ['NEW_SKILLS', 'STATUS_CHANGES', 'EVIDENCE', 'OPEN_QUESTIONS', 'RELATIONS', 'SUGGESTED_SKILLS', 'SESSION_NOTES']
 
 export function ImportButton() {
+  const t = useT()
   const dialog = useRef<HTMLDialogElement>(null)
   // Remounting the body on every open starts each import from a clean state.
   const [session, setSession] = useState(0)
@@ -30,9 +25,9 @@ export function ImportButton() {
           dialog.current?.showModal()
         }}
       >
-        Import
+        {t('import')}
       </button>
-      <dialog ref={dialog} className="import" aria-label="Import a MiniBrain update">
+      <dialog ref={dialog} className="import" aria-label={t('import.label')}>
         <ImportBody key={session} onDone={() => dialog.current?.close()} />
       </dialog>
     </>
@@ -40,13 +35,14 @@ export function ImportButton() {
 }
 
 function ImportBody({ onDone }: { onDone: () => void }) {
+  const t = useT()
   const queryClient = useQueryClient()
   const [text, setText] = useState('')
   const [preview, setPreview] = useState<ImportPreview | null>(null)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<string | null>(null)
+  const [result, setResult] = useState<number | null>(null)
 
   async function runPreview() {
     setBusy(true)
@@ -68,7 +64,7 @@ function ImportBody({ onDone }: { onDone: () => void }) {
     try {
       const r = await applyImport(text, [...selected])
       await queryClient.invalidateQueries() // the map and any open card show the new state
-      setResult(`Applied ${r.applied} change${r.applied === 1 ? '' : 's'}.`)
+      setResult(r.applied)
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -85,14 +81,14 @@ function ImportBody({ onDone }: { onDone: () => void }) {
     })
   }
 
-  if (result) {
+  if (result !== null) {
     return (
       <div className="import__body">
-        <h2 className="import__title">Import finished</h2>
-        <p>{result}</p>
+        <h2 className="import__title">{t('import.finished')}</h2>
+        <p>{t('import.applied', { n: result })}</p>
         <div className="import__actions">
           <button type="button" className="card__action" onClick={onDone} autoFocus>
-            Back to the map
+            {t('import.toMap')}
           </button>
         </div>
       </div>
@@ -102,20 +98,18 @@ function ImportBody({ onDone }: { onDone: () => void }) {
   if (!preview) {
     return (
       <div className="import__body">
-        <h2 className="import__title">Import an update</h2>
-        <p className="import__hint">
-          Paste the AI's answer (the whole message is fine, notes included) or choose a <code>.json</code> file.
-        </p>
+        <h2 className="import__title">{t('import.title')}</h2>
+        <p className="import__hint">{t('import.hint')}</p>
         <textarea
           className="import__text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder='{ "type": "MINIBRAIN_UPDATE", ... }'
-          aria-label="MINIBRAIN_UPDATE text"
+          aria-label={t('import.textLabel')}
           autoFocus
         />
         <label className="import__file">
-          Or choose a file:{' '}
+          {t('import.file')}{' '}
           <input
             type="file"
             accept=".json,.txt,.md,application/json,text/plain"
@@ -128,10 +122,10 @@ function ImportBody({ onDone }: { onDone: () => void }) {
         {error && <p className="import__error" role="alert">{error}</p>}
         <div className="import__actions">
           <button type="button" className="card__action" onClick={runPreview} disabled={busy || !text.trim()}>
-            Preview changes
+            {t('import.preview')}
           </button>
           <button type="button" className="import__secondary" onClick={onDone}>
-            Cancel
+            {t('import.cancel')}
           </button>
         </div>
       </div>
@@ -146,13 +140,13 @@ function ImportBody({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="import__body">
-      <h2 className="import__title">{preview.topic ? `Preview: ${preview.topic}` : 'Preview'}</h2>
+      <h2 className="import__title">{preview.topic ? `${t('import.previewTitle')}: ${preview.topic}` : t('import.previewTitle')}</h2>
       {preview.documentIssues.map((issue) => (
         <p key={issue.code} className="import__error" role="alert">{issue.message}</p>
       ))}
       {preview.documentIssues.length === 0 && (
         <p className="import__hint">
-          {counts.ready} ready, {counts.present} already in MiniBrain, {counts.invalid} with errors. Only ticked lines are applied.
+          {t('import.summary', counts)}
         </p>
       )}
       <div className="import__sections">
@@ -161,7 +155,7 @@ function ImportBody({ onDone }: { onDone: () => void }) {
           if (items.length === 0) return null
           return (
             <section key={section}>
-              <h3>{SECTION_TITLE[section]}</h3>
+              <h3>{t(`section.${section}`)}</h3>
               <ul className="import__items">
                 {items.map((item) => (
                   <PreviewLine key={item.id} item={item} checked={selected.has(item.id)} onToggle={() => toggle(item.id)} />
@@ -174,10 +168,10 @@ function ImportBody({ onDone }: { onDone: () => void }) {
       {error && <p className="import__error" role="alert">{error}</p>}
       <div className="import__actions">
         <button type="button" className="card__action" onClick={runApply} disabled={busy || selected.size === 0}>
-          Apply {selected.size} selected
+          {t('import.apply', { n: selected.size })}
         </button>
         <button type="button" className="import__secondary" onClick={() => setPreview(null)} disabled={busy}>
-          Back
+          {t('import.back')}
         </button>
       </div>
     </div>
@@ -185,6 +179,7 @@ function ImportBody({ onDone }: { onDone: () => void }) {
 }
 
 function PreviewLine({ item, checked, onToggle }: { item: ImportItem; checked: boolean; onToggle: () => void }) {
+  const t = useT()
   const ready = item.verdict === 'READY'
   return (
     <li className={`import__item import__item--${item.verdict.toLowerCase()}`}>
@@ -192,7 +187,7 @@ function PreviewLine({ item, checked, onToggle }: { item: ImportItem; checked: b
         <input type="checkbox" checked={ready && checked} disabled={!ready} onChange={onToggle} />
         <span>
           {item.label}
-          {item.verdict === 'ALREADY_PRESENT' && <em className="import__tag"> already in MiniBrain</em>}
+          {item.verdict === 'ALREADY_PRESENT' && <em className="import__tag"> {t('import.alreadyPresent')}</em>}
         </span>
       </label>
       {item.issues.map((issue) => (

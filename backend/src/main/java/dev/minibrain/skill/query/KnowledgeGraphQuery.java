@@ -16,10 +16,11 @@ public class KnowledgeGraphQuery {
     }
 
     public KnowledgeGraph get() {
-        var nodes = jdbc.sql("SELECT key, name, status FROM skill ORDER BY key")
+        var nodes = jdbc.sql("SELECT key, name, name_ru, status FROM skill ORDER BY key")
                 .query((rs, rowNum) -> new KnowledgeGraph.Node(
                         rs.getString("key"),
                         rs.getString("name"),
+                        rs.getString("name_ru"),
                         SkillStatus.valueOf(rs.getString("status"))))
                 .list();
         var edges = jdbc.sql("""

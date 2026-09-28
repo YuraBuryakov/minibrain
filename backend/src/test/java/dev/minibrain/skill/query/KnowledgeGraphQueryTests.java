@@ -32,8 +32,8 @@ class KnowledgeGraphQueryTests {
         KnowledgeGraph graph = query.get();
 
         assertThat(graph.nodes()).contains(
-                new KnowledgeGraph.Node("graph.outbox", "Outbox", SkillStatus.LEARNING),
-                new KnowledgeGraph.Node("graph.transactions", "Transactions", SkillStatus.APPLIED));
+                new KnowledgeGraph.Node("graph.outbox", "Outbox", null, SkillStatus.LEARNING),
+                new KnowledgeGraph.Node("graph.transactions", "Transactions", null, SkillStatus.APPLIED));
         assertThat(graph.edges()).contains(
                 new KnowledgeGraph.Edge("graph.outbox", RelationType.REQUIRES, "graph.transactions"));
     }

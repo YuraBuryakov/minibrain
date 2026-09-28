@@ -3,7 +3,7 @@
 export type SkillStatus = 'DISCOVERED' | 'LEARNING' | 'UNDERSTOOD' | 'APPLIED' | 'MASTERED'
 export type RelationType = 'PART_OF' | 'REQUIRES' | 'RELATED_TO' | 'LEADS_TO'
 
-export type GraphNode = { key: string; name: string; status: SkillStatus }
+export type GraphNode = { key: string; name: string; nameRu: string | null; status: SkillStatus }
 export type GraphEdge = { from: string; type: RelationType; to: string }
 export type KnowledgeGraph = { nodes: GraphNode[]; edges: GraphEdge[] }
 
@@ -13,18 +13,20 @@ export async function fetchGraph(): Promise<KnowledgeGraph> {
   return response.json()
 }
 
-// Mirrors dev.minibrain.skill.query.SkillDetails (the Skill card).
+// Mirrors dev.minibrain.skill.query.SkillDetails (the Skill card). *Ru: optional Russian version (null = use English).
 export type SkillDetails = {
   key: string
   name: string
+  nameRu: string | null
   description: string | null
+  descriptionRu: string | null
   status: SkillStatus
   createdAt: string
   updatedAt: string
-  evidence: { text: string; createdAt: string }[]
-  openQuestions: { text: string; createdAt: string; resolvedAt: string | null }[]
+  evidence: { text: string; textRu: string | null; createdAt: string }[]
+  openQuestions: { text: string; textRu: string | null; createdAt: string; resolvedAt: string | null }[]
   // Seen from this skill: outgoing = this skill is the "from" side; key/name/status belong to the other skill.
-  relations: { type: RelationType; outgoing: boolean; key: string; name: string; status: SkillStatus }[]
+  relations: { type: RelationType; outgoing: boolean; key: string; name: string; nameRu: string | null; status: SkillStatus }[]
 }
 
 export async function fetchSkillDetails(key: string): Promise<SkillDetails> {

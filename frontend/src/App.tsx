@@ -2,32 +2,37 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { Controls, Panel, ReactFlow, type ReactFlowInstance } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { fetchGraph, type SkillStatus } from './api'
+import { fetchGraph, type RelationType, type SkillStatus } from './api'
+import { initialLang, LangContext, saveLang, useT, type Lang } from './i18n'
 import { ImportButton } from './ImportDialog'
 import { SkillCard } from './SkillCard'
 import { edgeTypes, nodeTypes } from './skillMapParts'
 import './skillMap.css'
 import { toFlow } from './toFlow'
 
-const STATUS_LEGEND: [SkillStatus, string][] = [
-  ['DISCOVERED', 'Know it exists'],
-  ['LEARNING', 'Working on it'],
-  ['UNDERSTOOD', 'Can explain it'],
-  ['APPLIED', 'Used it for real'],
-  ['MASTERED', 'Know the trade-offs'],
-]
-
-const RELATION_LEGEND: [string, string][] = [
-  ['requires', 'Requires'],
-  ['leads-to', 'Leads to'],
-  ['related-to', 'Related to'],
-  ['part-of', 'Part of'],
-]
+const STATUSES: SkillStatus[] = ['DISCOVERED', 'LEARNING', 'UNDERSTOOD', 'APPLIED', 'MASTERED']
+const RELATIONS: RelationType[] = ['REQUIRES', 'LEADS_TO', 'RELATED_TO', 'PART_OF']
 
 export default function App() {
+  const [lang, setLang] = useState<Lang>(initialLang)
+
+  useEffect(() => {
+    document.documentElement.lang = lang
+    saveLang(lang)
+  }, [lang])
+
+  return (
+    <LangContext.Provider value={lang}>
+      <SkillMap lang={lang} onLangChange={setLang} />
+    </LangContext.Provider>
+  )
+}
+
+function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lang) => void }) {
+  const t = useT()
   const graph = useQuery({ queryKey: ['graph'], queryFn: fetchGraph })
   const [selected, setSelected] = useState<string | null>(null)
-  const flow = useMemo(() => (graph.data ? toFlow(graph.data, selected) : null), [graph.data, selected])
+  const flow = useMemo(() => (graph.data ? toFlow(graph.data, selected, lang) : null), [graph.data, selected, lang])
   const [map, setMap] = useState<ReactFlowInstance | null>(null)
 
   // Bring the selected skill into view, left of the card (which covers the right 400px).
@@ -46,8 +51,8 @@ export default function App() {
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [])
 
-  if (graph.isPending) return <p className="message">Loading the Skill Map…</p>
-  if (graph.isError) return <p className="message">Could not load the Skill Map: {graph.error.message}. Is the backend running?</p>
+  if (graph.isPending) return <p className="message">{t('loading')}</p>
+  if (graph.isError) return <p className="message">{t('loadFailed', { error: graph.error.message })}</p>
 
   return (
     <div className={selected ? 'skill-map skill-map--with-card' : 'skill-map'}>
@@ -70,19 +75,26 @@ export default function App() {
         <Controls showInteractive={false} />
         <Panel position="top-left" className="map-toolbar">
           <ImportButton />
+          <div className="lang-switch" role="group" aria-label={t('language')}>
+            {(['en', 'ru'] as Lang[]).map((l) => (
+              <button key={l} type="button" aria-pressed={lang === l} onClick={() => onLangChange(l)}>
+                {l === 'en' ? 'EN' : 'RU'}
+              </button>
+            ))}
+          </div>
           <details className="legend">
-            <summary>Legend</summary>
+            <summary>{t('legend')}</summary>
             <ul>
-              {STATUS_LEGEND.map(([status, meaning]) => (
+              {STATUSES.map((status) => (
                 <li key={status}>
                   <span className={`orb orb--${status.toLowerCase()}`} />
-                  {meaning}
+                  {t(`legend.${status}`)}
                 </li>
               ))}
-              {RELATION_LEGEND.map(([type, label]) => (
+              {RELATIONS.map((type) => (
                 <li key={type}>
-                  <span className={`legend__line legend__line--${type}`} />
-                  {label}
+                  <span className={`legend__line legend__line--${type.toLowerCase().replace('_', '-')}`} />
+                  {t(`relation.${type}`)}
                 </li>
               ))}
             </ul>

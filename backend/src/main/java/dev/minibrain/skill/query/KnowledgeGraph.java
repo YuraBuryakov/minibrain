@@ -10,7 +10,8 @@ import java.util.List;
  */
 public record KnowledgeGraph(List<Node> nodes, List<Edge> edges) {
 
-    public record Node(String key, String name, SkillStatus status) {
+    /** {@code nameRu} may be null: the UI then shows {@code name} (English). */
+    public record Node(String key, String name, String nameRu, SkillStatus status) {
     }
 
     public record Edge(String from, RelationType type, String to) {

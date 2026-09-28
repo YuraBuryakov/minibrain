@@ -21,11 +21,17 @@ public class EvidenceRepository {
     }
 
     public Evidence add(long skillId, String text) {
+        return add(skillId, text, null);
+    }
+
+    /** {@code textRu}: optional Russian version (NULL = show English). */
+    public Evidence add(long skillId, String text, String textRu) {
         Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
         var keyHolder = new GeneratedKeyHolder();
-        jdbc.sql("INSERT INTO evidence (skill_id, text, created_at) VALUES (:skillId, :text, :now)")
+        jdbc.sql("INSERT INTO evidence (skill_id, text, text_ru, created_at) VALUES (:skillId, :text, :textRu, :now)")
                 .param("skillId", skillId)
                 .param("text", text)
+                .param("textRu", textRu)
                 .param("now", TIMESTAMP.format(now))
                 .update(keyHolder);
         return new Evidence(keyHolder.getKey().longValue(), text, now);

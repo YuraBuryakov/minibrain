@@ -832,3 +832,32 @@
 .notes__text em {
   color: var(--bone);
 }
+
+/* ---- language switch in the toolbar ---- */
+
+.lang-switch {
+  display: flex;
+  border: 1px solid var(--bronze-dim);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.lang-switch button {
+  padding: 8px 12px;
+  border: 0;
+  background: rgba(12, 9, 18, 0.85);
+  color: var(--bone-dim);
+  font-family: 'IM Fell English SC', Georgia, serif;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.lang-switch button[aria-pressed='true'] {
+  background: linear-gradient(180deg, #3a2a18, #22170d);
+  color: var(--parchment);
+}
+
+.lang-switch button:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: -2px;
+}

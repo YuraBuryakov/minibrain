@@ -53,8 +53,8 @@ class SkillDetailsQueryTests {
         assertThat(details.openQuestions().get(1).resolvedAt()).isNotNull();
         // outgoing first, each seen from this skill with the other skill's name and status
         assertThat(details.relations()).containsExactly(
-                new SkillDetails.Relation(RelationType.REQUIRES, true, "details.tx", "Transactions", SkillStatus.APPLIED),
-                new SkillDetails.Relation(RelationType.RELATED_TO, false, "details.saga", "Saga", SkillStatus.LEARNING));
+                new SkillDetails.Relation(RelationType.REQUIRES, true, "details.tx", "Transactions", null, SkillStatus.APPLIED),
+                new SkillDetails.Relation(RelationType.RELATED_TO, false, "details.saga", "Saga", null, SkillStatus.LEARNING));
     }
 
     @Test

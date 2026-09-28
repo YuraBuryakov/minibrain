@@ -6,11 +6,16 @@ import dev.minibrain.skill.domain.SkillStatus;
 import java.time.Instant;
 import java.util.List;
 
-/** Read model for the Skill card (brief §47 GetSkillDetails): everything the card shows, in one shape. */
+/**
+ * Read model for the Skill card (brief §47 GetSkillDetails): everything the card shows, in one shape.
+ * Every {@code *Ru} field is the optional Russian version of the field before it (null = show English).
+ */
 public record SkillDetails(
         String key,
         String name,
+        String nameRu,
         String description,
+        String descriptionRu,
         SkillStatus status,
         Instant createdAt,
         Instant updatedAt,
@@ -18,17 +23,17 @@ public record SkillDetails(
         List<Question> openQuestions,
         List<Relation> relations) {
 
-    public record Evidence(String text, Instant createdAt) {
+    public record Evidence(String text, String textRu, Instant createdAt) {
     }
 
     /** {@code resolvedAt} is null while the question is still open. */
-    public record Question(String text, Instant createdAt, Instant resolvedAt) {
+    public record Question(String text, String textRu, Instant createdAt, Instant resolvedAt) {
     }
 
     /**
      * A relation seen from this skill. {@code outgoing}: this skill is the "from" side.
      * key / name / status describe the skill on the other end, so the card can show and link it.
      */
-    public record Relation(RelationType type, boolean outgoing, String key, String name, SkillStatus status) {
+    public record Relation(RelationType type, boolean outgoing, String key, String name, String nameRu, SkillStatus status) {
     }
 }

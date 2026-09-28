@@ -30,15 +30,22 @@ public class SkillRepository {
     }
 
     public Skill create(String key, String name, String description, SkillStatus status) {
+        return create(key, name, null, description, null, status);
+    }
+
+    /** {@code nameRu} / {@code descriptionRu}: optional Russian versions (NULL = show English). */
+    public Skill create(String key, String name, String nameRu, String description, String descriptionRu, SkillStatus status) {
         Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
         var keyHolder = new GeneratedKeyHolder();
         jdbc.sql("""
-                        INSERT INTO skill (key, name, description, status, created_at, updated_at)
-                        VALUES (:key, :name, :description, :status, :now, :now)
+                        INSERT INTO skill (key, name, name_ru, description, description_ru, status, created_at, updated_at)
+                        VALUES (:key, :name, :nameRu, :description, :descriptionRu, :status, :now, :now)
                         """)
                 .param("key", key)
                 .param("name", name)
+                .param("nameRu", nameRu)
                 .param("description", description)
+                .param("descriptionRu", descriptionRu)
                 .param("status", status.name())
                 .param("now", TIMESTAMP.format(now))
                 .update(keyHolder);
