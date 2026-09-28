@@ -41,3 +41,19 @@ Format: date · decision · reason · alternatives considered.
 - **Decision:** `GET /api/skills` (all, ordered by `key`) and `GET /api/skills/{key}` (404 if missing). One shared row mapper.
 - **Why:** API addresses Skills by stable `key`, never by numeric `id`. Ordering by `key` gives stable output.
 - **Deferred:** paging and filtering. Not needed while the map holds tens of Skills.
+
+### 2026-09-28 · Step 3: Evidence
+
+- **Decision:** separate `evidence` table and `EvidenceRepository`; API nested under the Skill:
+  `POST|GET /api/skills/{key}/evidence`. `Skill` itself does not carry an evidence list.
+- **Why:** no invariant links Skill and Evidence yet, only ownership. The Skill card (step 8) will compose them.
+- **SQLite foreign keys** are off by default; enabled with the `foreign_keys` pragma via Hikari data-source properties.
+- **Deferred:** Evidence types (brief: v2), edit/delete, Revision (step 14).
+
+### 2026-09-28 · Repositories stay concrete classes (no interfaces yet)
+
+- **Decision:** no `SkillRepository` interface + `Jdbc...` implementation for now.
+- **Why:** a future Hibernate switch changes the model (records cannot be JPA entities) and Spring Data brings its own
+  interface shape, so an interface guessed today would not survive. Callers already depend only on domain methods;
+  extract the interface when a second (JPA) implementation actually appears.
+- **Alternative:** ports & adapters now (interface per repository). Rejected as speculative.

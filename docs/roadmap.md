@@ -9,7 +9,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 0 | Repository skeleton: Spring Boot boots, SQLite datasource configured, docs, CLAUDE.md | ✅ done |
 | 1 | Flyway + first migration (`skill` table) + create one Skill | ✅ done |
 | 2 | Read Skill data back | ✅ done |
-| 3 | Evidence | ⬜ |
+| 3 | Evidence | ✅ done |
 | 4 | Open Questions | ⬜ |
 | 5 | Relations | ⬜ |
 | 6 | Basic graph query | ⬜ |
