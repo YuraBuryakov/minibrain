@@ -3,7 +3,7 @@ package dev.minibrain.skill;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,6 +31,6 @@ class EvidenceRepositoryTests {
     @Test
     void foreignKeyRejectsUnknownSkill() {
         assertThatThrownBy(() -> evidence.add(999_999, "Orphan evidence"))
-                .isInstanceOf(DataAccessException.class);
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

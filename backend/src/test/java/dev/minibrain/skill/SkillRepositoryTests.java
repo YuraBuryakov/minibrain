@@ -3,7 +3,7 @@ package dev.minibrain.skill;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,7 +48,7 @@ class SkillRepositoryTests {
         skills.create("messaging.outbox", "Outbox", null, SkillStatus.DISCOVERED);
 
         assertThatThrownBy(() -> skills.create("messaging.outbox", "Outbox again", null, SkillStatus.DISCOVERED))
-                .isInstanceOf(DataAccessException.class);
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -57,6 +57,6 @@ class SkillRepositoryTests {
                         INSERT INTO skill (key, name, status, created_at, updated_at)
                         VALUES ('x.y', 'X', 'GURU', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z')
                         """).update())
-                .isInstanceOf(DataAccessException.class);
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

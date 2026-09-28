@@ -66,3 +66,11 @@ Format: date · decision · reason · alternatives considered.
 - **`UNIQUE (skill_id, text)`:** `MINIBRAIN_UPDATE` resolves questions by text, so duplicates within a Skill would be ambiguous.
 - **Not linked to Evidence on resolve:** Evidence is added via its own endpoint; the import Apply (step 13) will do both
   in one transaction.
+
+### 2026-09-28 · Constraint violations → 409
+
+- **Decision:** `sql-error-codes.xml` maps SQLite vendor code 19 (`SQLITE_CONSTRAINT`) to `DataIntegrityViolationException`;
+  one `@RestControllerAdvice` turns it into `409 Conflict` (ProblemDetail, generic text, no SQL leaked).
+- **Why:** Spring has no SQLite error codes, so every SQLite error was `UncategorizedSQLException` → 500.
+  sqlite-jdbc sets no SQLState and uses code 19 for all constraints, so UNIQUE / FK / CHECK cannot be told apart
+  by code; through the API only UNIQUE can realistically fire (FK and CHECK are guarded in Java).

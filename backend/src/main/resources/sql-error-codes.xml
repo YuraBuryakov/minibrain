@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN 2.0//EN" "https://www.springframework.org/dtd/spring-beans-2.0.dtd">
+
+<!--
+    Spring has no built-in error codes for SQLite, so every SQLite error became UncategorizedSQLException.
+    sqlite-jdbc reports every constraint violation (UNIQUE, FOREIGN KEY, CHECK, NOT NULL) with vendor code 19
+    (SQLITE_CONSTRAINT) and no SQLState, so all of them map to DataIntegrityViolationException.
+    Spring merges this file with its defaults (other databases keep working).
+-->
+<beans>
+    <bean id="SQLite" class="org.springframework.jdbc.support.SQLErrorCodes">
+        <property name="databaseProductName" value="SQLite"/>
+        <property name="dataIntegrityViolationCodes" value="19"/>
+    </bean>
+</beans>
