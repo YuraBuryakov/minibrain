@@ -143,6 +143,19 @@ Locked achievements are shown dimmed with their condition, so it is clear what t
   AI returns `bossResult` in MINIBRAIN_UPDATE; a passed exam is recorded as revision change `BOSS_PASSED` (the only
   stored game fact) and gives the area a seal.
 
+## 13a. Open idea: XP for reading in English (not decided)
+
+Owner's wish (2026-09-29): a little XP when I read a skill and all its information in English (practising the
+language). Tension: the core rule is "XP only for demonstrated understanding, never for clicks", and a "read" button
+is a click. Options to decide in a short brainstorm before building:
+
+- **Honest button, tiny reward:** "I read it in English" on the Skill card, once per skill (or once per new content),
+  +2 XP; recorded as a revision change so the replay can count it. Simple, but trust-based.
+- **Proven by a check:** the AI asks 1-2 short questions in English about the skill; a correct answer (via
+  MINIBRAIN_UPDATE) gives the XP. Fits the core rule; needs the AI loop (or the AI chat).
+- **Separate track:** an "English" progress bar next to the character level (reading streak-free counter), not mixed
+  into knowledge XP, so knowledge levels stay honest.
+
 ## 14. Architecture
 
 Backend, new module `game` (brief §50 says no module before it is needed; it is needed now):

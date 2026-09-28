@@ -40,6 +40,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | G4 | Constellations, achievements, journal of deeds, XP chart, hero window | ⬜ |
 | G5 | AI teaches by rank (MINIBRAIN_CONTEXT v3, context assembly moves to `learning`) | ⬜ |
 | later | Pathfinder points / new branch, area bosses (with the AI chat) | ⬜ |
+| idea | XP for reading a skill in English (design §13a, options open, brainstorm first) | ⬜ |
 
 ## Backlog (my wishes, not scheduled yet)
 
