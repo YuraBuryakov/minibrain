@@ -1,0 +1,30 @@
+# Build
+target/
+node_modules/
+dist/
+
+# Runtime data
+data/*
+!data/.gitkeep
+backups/*
+!backups/.gitkeep
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local

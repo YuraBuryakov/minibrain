@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: minibrain
+  datasource:
+    # Relative to the working directory. Run the backend from the backend/ folder,
+    # so the database lands in <repo>/data/minibrain.db.
+    # Override with MINIBRAIN_DB_URL if needed.
+    url: ${MINIBRAIN_DB_URL:jdbc:sqlite:../data/minibrain.db}
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      # SQLite allows only one writer at a time — keep the pool tiny.
+      maximum-pool-size: 1
