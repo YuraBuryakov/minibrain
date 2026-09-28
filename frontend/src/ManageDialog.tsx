@@ -1,17 +1,29 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import translatePrompt from './ai/translate-prompt.md?raw'
-import { fetchMissingTranslations, type TranslationRequest } from './api'
+import { fetchCurrentState, fetchMissingTranslations, type TranslationRequest } from './api'
 import { useT } from './i18n'
 import { HistorySection } from './HistorySection'
 import { ImportBody } from './ImportDialog'
 
 // "Manage" window. First section: export texts without a Russian version for an AI to translate
 // (all at once, as a file, or skill by skill). The AI's answer comes back through Import.
+// Then: save the whole knowledge as current.json (brief §24), and the revision history.
 
 type Skill = TranslationRequest['skills'][number]
 
 const textCount = (s: Skill) => (s.name ? 1 : 0) + (s.description ? 1 : 0) + (s.evidence?.length ?? 0) + (s.openQuestions?.length ?? 0)
+
+const today = () => new Date().toISOString().slice(0, 10)
+
+/** Lets the browser save `text` as a file in Downloads. */
+function saveFile(text: string, name: string, type: string) {
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(new Blob([text], { type }))
+  link.download = name
+  link.click()
+  URL.revokeObjectURL(link.href)
+}
 
 /** Instructions + the request JSON, ready for an AI chat. */
 function forAi(request: TranslationRequest) {
@@ -50,6 +62,7 @@ function ManageBody({ onClose }: { onClose: () => void }) {
   const [status, setStatus] = useState<string | null>(null)
   // Importing the AI answer happens inside this window; the list refreshes afterwards (Import invalidates queries).
   const [importing, setImporting] = useState(false)
+  const [exportStatus, setExportStatus] = useState<string | null>(null)
 
   async function copy(skill?: string) {
     try {
@@ -62,12 +75,18 @@ function ManageBody({ onClose }: { onClose: () => void }) {
   }
 
   function download() {
-    const blob = new Blob([forAi(missing.data!)], { type: 'text/markdown;charset=utf-8' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `minibrain-translation-${new Date().toISOString().slice(0, 10)}.md`
-    link.click()
-    URL.revokeObjectURL(link.href)
+    saveFile(forAi(missing.data!), `minibrain-translation-${today()}.md`, 'text/markdown;charset=utf-8')
+  }
+
+  async function exportCurrent() {
+    try {
+      // Pretty-printed with a final newline: readable, and diffs cleanly if the file ends up in Git.
+      const json = `${JSON.stringify(await fetchCurrentState(), null, 2)}\n`
+      saveFile(json, `minibrain-current-${today()}.json`, 'application/json;charset=utf-8')
+      setExportStatus(null)
+    } catch (e) {
+      setExportStatus(e instanceof Error ? e.message : String(e))
+    }
   }
 
   const skills = missing.data?.skills ?? []
@@ -123,6 +142,17 @@ function ManageBody({ onClose }: { onClose: () => void }) {
             </ul>
           </>
         )}
+      </section>
+
+      <section className="manage__section">
+        <h3>{t('manage.export')}</h3>
+        <p className="import__hint">{t('manage.exportHint')}</p>
+        <div className="import__actions">
+          <button type="button" className="card__action" onClick={exportCurrent}>
+            {t('manage.exportButton')}
+          </button>
+        </div>
+        {exportStatus && <p className="import__error">{exportStatus}</p>}
       </section>
 
       <HistorySection />

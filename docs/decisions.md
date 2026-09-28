@@ -265,3 +265,17 @@ Format: date · decision · reason · alternatives considered.
 - **No module cycle:** `revision` stores statuses / relation types as plain names and depends on no other module;
   `skill` and `importing` write into it.
 - **UI:** "History" section in the Manage window (native `<details>` per revision).
+
+### 2026-09-29 · Step 15: `current.json` export
+
+- **Decision:** `GET /api/exports/current` returns `MINIBRAIN_CURRENT` schemaVersion 1: flat lists `skills`,
+  `relations`, `evidence`, `openQuestions`, `learningSessions`, linked by skill keys. Texts as `{en, ru}`
+  (`LocalizedText`, same as UPDATE v2). Stored values only: timestamps as stored, no calculated fields, no UI state.
+- **No revision history in the file:** current.json answers "what do I know now" (brief §25); after a future restore
+  the history starts with a RESTORE revision.
+- **Deterministic:** every list is sorted by stored values (key, time, text), never by numeric id, so the same
+  knowledge gives the same file even after a restore into a fresh database. Only `exportedAt` changes.
+- **Browser download only** (Manage → "Full export", `minibrain-current-<date>.json`). The backend writes nothing to
+  `exports/`; snapshots and restore with preview are a later slice.
+- **Where:** module `importing` (`format/CurrentState`, `query/CurrentStateQuery`, `web/ExportController`). Restore
+  will read the same contract, and `skill` must not read `learning` tables. No new module (brief §50).

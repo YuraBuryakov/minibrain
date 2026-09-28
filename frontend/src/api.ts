@@ -43,6 +43,13 @@ export async function fetchAiContext(key: string, goal: string): Promise<unknown
   return response.json()
 }
 
+// current.json (backend CurrentState) is only saved to a file, so the frontend does not need its exact shape.
+export async function fetchCurrentState(): Promise<unknown> {
+  const response = await fetch('/api/exports/current')
+  if (!response.ok) throw new Error(`GET current state failed: ${response.status}`)
+  return response.json()
+}
+
 // Mirrors dev.minibrain.importing.application.ImportPreview.
 export type ImportSection = 'NEW_SKILLS' | 'STATUS_CHANGES' | 'EVIDENCE' | 'OPEN_QUESTIONS' | 'RELATIONS' | 'SUGGESTED_SKILLS' | 'TRANSLATIONS' | 'SESSION_NOTES'
 export type ImportIssue = { code: string; severity: 'ERROR' | 'WARNING'; message: string }
