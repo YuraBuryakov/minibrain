@@ -60,6 +60,18 @@ public class SkillRepository {
                 .update();
     }
 
+    public void setNameRu(long id, String nameRu) {
+        jdbc.sql("UPDATE skill SET name_ru = ?, updated_at = ? WHERE id = ?")
+                .params(nameRu, TIMESTAMP.format(Instant.now()), id)
+                .update();
+    }
+
+    public void setDescriptionRu(long id, String descriptionRu) {
+        jdbc.sql("UPDATE skill SET description_ru = ?, updated_at = ? WHERE id = ?")
+                .params(descriptionRu, TIMESTAMP.format(Instant.now()), id)
+                .update();
+    }
+
     public Optional<Skill> findByKey(String key) {
         return jdbc.sql("SELECT * FROM skill WHERE key = ?")
                 .param(key)

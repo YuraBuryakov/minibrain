@@ -40,6 +40,13 @@ public class OpenQuestionRepository {
         return new OpenQuestion(keyHolder.getKey().longValue(), text, now, null);
     }
 
+    /** Sets the Russian version of the text with this English (stored) text. */
+    public void setTextRu(long skillId, String text, String textRu) {
+        jdbc.sql("UPDATE open_question SET text_ru = ? WHERE skill_id = ? AND text = ?")
+                .params(textRu, skillId, text)
+                .update();
+    }
+
     public List<OpenQuestion> findBySkillId(long skillId) {
         return jdbc.sql("SELECT * FROM open_question WHERE skill_id = ? ORDER BY id")
                 .param(skillId)

@@ -37,6 +37,13 @@ public class EvidenceRepository {
         return new Evidence(keyHolder.getKey().longValue(), text, now);
     }
 
+    /** Sets the Russian version of the text with this English (stored) text. */
+    public void setTextRu(long skillId, String text, String textRu) {
+        jdbc.sql("UPDATE evidence SET text_ru = ? WHERE skill_id = ? AND text = ?")
+                .params(textRu, skillId, text)
+                .update();
+    }
+
     public List<Evidence> findBySkillId(long skillId) {
         return jdbc.sql("SELECT id, text, created_at FROM evidence WHERE skill_id = ? ORDER BY id")
                 .param(skillId)

@@ -31,6 +31,11 @@ public sealed interface Change {
     record SuggestSkill(String key, String name, String nameRu, String reason) implements Change {
     }
 
+    /** Sets the Russian version of one existing text; {@code original} is its stored English text. */
+    record Translate(Target target, String skill, String original, String ru) implements Change {
+        public enum Target { NAME, DESCRIPTION, EVIDENCE, QUESTION }
+    }
+
     /** Bilingual study notes of the session, linked to the skills this import touches. */
     record SaveSessionNotes(String topic, String notesEn, String notesRu) implements Change {
     }

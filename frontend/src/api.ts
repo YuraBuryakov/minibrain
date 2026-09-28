@@ -44,7 +44,7 @@ export async function fetchAiContext(key: string, goal: string): Promise<unknown
 }
 
 // Mirrors dev.minibrain.importing.application.ImportPreview.
-export type ImportSection = 'NEW_SKILLS' | 'STATUS_CHANGES' | 'EVIDENCE' | 'OPEN_QUESTIONS' | 'RELATIONS' | 'SUGGESTED_SKILLS' | 'SESSION_NOTES'
+export type ImportSection = 'NEW_SKILLS' | 'STATUS_CHANGES' | 'EVIDENCE' | 'OPEN_QUESTIONS' | 'RELATIONS' | 'SUGGESTED_SKILLS' | 'TRANSLATIONS' | 'SESSION_NOTES'
 export type ImportIssue = { code: string; severity: 'ERROR' | 'WARNING'; message: string }
 export type ImportItem = {
   id: number
@@ -86,5 +86,19 @@ export type SessionNotes = { id: number; topic: string | null; notesEn: string |
 export async function fetchSessions(key: string): Promise<SessionNotes[]> {
   const response = await fetch(`/api/skills/${encodeURIComponent(key)}/sessions`)
   if (!response.ok) throw new Error(`GET sessions ${key} failed: ${response.status}`)
+  return response.json()
+}
+
+// Mirrors dev.minibrain.skill.query.TranslationRequest: English texts without a Russian version.
+export type TranslationRequest = {
+  type: 'MINIBRAIN_TRANSLATION_REQUEST'
+  schemaVersion: number
+  skills: { key: string; name?: string; description?: string; evidence?: string[]; openQuestions?: string[] }[]
+}
+
+export async function fetchMissingTranslations(skill?: string): Promise<TranslationRequest> {
+  const query = skill ? `?skill=${encodeURIComponent(skill)}` : ''
+  const response = await fetch(`/api/translations/missing${query}`)
+  if (!response.ok) throw new Error(`GET missing translations failed: ${response.status}`)
   return response.json()
 }

@@ -7,7 +7,7 @@ import { useT } from './i18n'
 
 // Display order; titles come from the i18n dictionary ("section.*").
 // Server-side labels and issue messages stay in English (they quote the imported texts anyway).
-const SECTIONS: ImportSection[] = ['NEW_SKILLS', 'STATUS_CHANGES', 'EVIDENCE', 'OPEN_QUESTIONS', 'RELATIONS', 'SUGGESTED_SKILLS', 'SESSION_NOTES']
+const SECTIONS: ImportSection[] = ['NEW_SKILLS', 'STATUS_CHANGES', 'EVIDENCE', 'OPEN_QUESTIONS', 'RELATIONS', 'SUGGESTED_SKILLS', 'TRANSLATIONS', 'SESSION_NOTES']
 
 export function ImportButton() {
   const t = useT()
@@ -34,7 +34,8 @@ export function ImportButton() {
   )
 }
 
-function ImportBody({ onDone }: { onDone: () => void }) {
+/** The import flow itself; also embedded in the Manage window. {@code doneLabel}: text of the final button. */
+export function ImportBody({ onDone, doneLabel }: { onDone: () => void; doneLabel?: string }) {
   const t = useT()
   const queryClient = useQueryClient()
   const [text, setText] = useState('')
@@ -88,7 +89,7 @@ function ImportBody({ onDone }: { onDone: () => void }) {
         <p>{t('import.applied', { n: result })}</p>
         <div className="import__actions">
           <button type="button" className="card__action" onClick={onDone} autoFocus>
-            {t('import.toMap')}
+            {doneLabel ?? t('import.toMap')}
           </button>
         </div>
       </div>

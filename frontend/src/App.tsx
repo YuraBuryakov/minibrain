@@ -5,6 +5,7 @@ import '@xyflow/react/dist/style.css'
 import { fetchGraph, type RelationType, type SkillStatus } from './api'
 import { initialLang, LangContext, saveLang, useT, type Lang } from './i18n'
 import { ImportButton } from './ImportDialog'
+import { ManageButton } from './ManageDialog'
 import { SkillCard } from './SkillCard'
 import { edgeTypes, nodeTypes } from './skillMapParts'
 import './skillMap.css'
@@ -75,6 +76,7 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
         <Controls showInteractive={false} />
         <Panel position="top-left" className="map-toolbar">
           <ImportButton />
+          <ManageButton />
           <div className="lang-switch" role="group" aria-label={t('language')}>
             {(['en', 'ru'] as Lang[]).map((l) => (
               <button key={l} type="button" aria-pressed={lang === l} onClick={() => onLangChange(l)}>

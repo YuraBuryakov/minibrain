@@ -87,7 +87,8 @@ public class ImportApplier {
             case Change.AddQuestion c -> 4;
             case Change.ResolveQuestion c -> 5;
             case Change.AddRelation c -> 6;
-            case Change.SaveSessionNotes c -> 7; // last: every touched skill exists by now
+            case Change.Translate c -> 7;
+            case Change.SaveSessionNotes c -> 8; // last: every touched skill exists by now
         };
     }
 
@@ -100,6 +101,7 @@ public class ImportApplier {
             case Change.AddQuestion c -> Stream.of(c.skill());
             case Change.ResolveQuestion c -> Stream.of(c.skill());
             case Change.AddRelation c -> Stream.of(c.from(), c.to());
+            case Change.Translate c -> Stream.of(c.skill());
             case Change.SaveSessionNotes c -> Stream.empty();
         };
     }
@@ -121,6 +123,15 @@ public class ImportApplier {
                         .ifPresent(q -> questions.resolve(skillId, q.id()));
             }
             case Change.AddRelation c -> relations.add(id(c.from()), id(c.to()), c.type());
+            case Change.Translate c -> {
+                long skillId = id(c.skill());
+                switch (c.target()) {
+                    case NAME -> skills.setNameRu(skillId, c.ru());
+                    case DESCRIPTION -> skills.setDescriptionRu(skillId, c.ru());
+                    case EVIDENCE -> evidence.setTextRu(skillId, c.original(), c.ru());
+                    case QUESTION -> questions.setTextRu(skillId, c.original(), c.ru());
+                }
+            }
             case Change.SaveSessionNotes c -> sessions.add(c.topic(), c.notesEn(), c.notesRu(), touched.stream()
                     .flatMap(key -> skills.findByKey(key).map(Skill::id).stream()) // skip skills that were not created
                     .toList());

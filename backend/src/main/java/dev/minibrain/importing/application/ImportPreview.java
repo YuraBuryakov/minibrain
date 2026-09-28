@@ -11,7 +11,7 @@ import java.util.List;
 public record ImportPreview(String topic, List<Issue> documentIssues, List<Item> items) {
 
     /** Sections of the preview screen, in display order. */
-    public enum Section { NEW_SKILLS, STATUS_CHANGES, EVIDENCE, OPEN_QUESTIONS, RELATIONS, SUGGESTED_SKILLS, SESSION_NOTES }
+    public enum Section { NEW_SKILLS, STATUS_CHANGES, EVIDENCE, OPEN_QUESTIONS, RELATIONS, SUGGESTED_SKILLS, TRANSLATIONS, SESSION_NOTES }
 
     /** READY: can be applied. ALREADY_PRESENT: MiniBrain already has it, skipped. INVALID: has an error. */
     public enum Verdict { READY, ALREADY_PRESENT, INVALID }
@@ -46,7 +46,9 @@ public record ImportPreview(String topic, List<Issue> documentIssues, List<Item>
             UNKNOWN_OPEN_QUESTION,
             STATUS_DOWNGRADE,
             ORPHAN_SKILL,
-            REDUNDANT_RELATION
+            REDUNDANT_RELATION,
+            UNKNOWN_TEXT,
+            REPLACES_TRANSLATION
         }
 
         static Issue error(Code code, String message) {

@@ -113,6 +113,7 @@ public class ImportPreviewer {
             pendingNewSkills.forEach(this::newSkillItem);
             orEmpty(document.changes()).forEach(this::skillChange);
             suggestedSkills();
+            orEmpty(document.translations()).forEach(this::translation);
             String topic = document.session() == null ? null : document.session().topic();
             sessionNotes(topic);
             return new ImportPreview(topic, List.of(), List.copyOf(items));
@@ -289,6 +290,56 @@ public class ImportPreviewer {
                 var change = issues.isEmpty() ? new Change.SuggestSkill(raw.key(), raw.name().primary(), raw.name().secondaryRu(), blankToNull(raw.reason())) : null;
                 add(Section.SUGGESTED_SKILLS, raw.key(), display(raw.name()) + " (" + raw.key() + ")", issues, change, present, true);
             }
+        }
+
+        // ---- translations of existing texts: fill a missing Russian version; replacing one is opt-in ----
+
+        private void translation(UpdateDocument.Translation raw) {
+            String key = raw.skill();
+            var unknown = new ArrayList<Issue>();
+            if (key == null || !existing.containsKey(key)) {
+                unknown.add(Issue.error(Code.UNKNOWN_SKILL_REFERENCE, "Unknown skill \"" + key + "\": translations are for existing skills."));
+            }
+            SkillDetails current = unknown.isEmpty() ? details(key) : null;
+            String name = name(key);
+
+            if (raw.name() != null) {
+                translate(Change.Translate.Target.NAME, key, name, "name", raw.name(), unknown,
+                        current == null ? null : current.name(), current == null ? null : current.nameRu());
+            }
+            if (raw.description() != null) {
+                translate(Change.Translate.Target.DESCRIPTION, key, name, "description", raw.description(), unknown,
+                        current == null ? null : current.description(), current == null ? null : current.descriptionRu());
+            }
+            for (LocalizedText text : nonEmpty(raw.evidence())) {
+                var match = current == null ? null : current.evidence().stream().filter(e -> e.text().equals(text.en())).findFirst().orElse(null);
+                translate(Change.Translate.Target.EVIDENCE, key, name, "evidence", text, unknown,
+                        match == null ? null : match.text(), match == null ? null : match.textRu());
+            }
+            for (LocalizedText text : nonEmpty(raw.openQuestions())) {
+                var match = current == null ? null : current.openQuestions().stream().filter(q -> q.text().equals(text.en())).findFirst().orElse(null);
+                translate(Change.Translate.Target.QUESTION, key, name, "question", text, unknown,
+                        match == null ? null : match.text(), match == null ? null : match.textRu());
+            }
+        }
+
+        /** {@code stored}: the current English text (null = not found); {@code storedRu}: its current Russian version. */
+        private void translate(Change.Translate.Target target, String key, String name, String what, LocalizedText text,
+                               List<Issue> unknown, String stored, String storedRu) {
+            var issues = new ArrayList<>(unknown);
+            if (issues.isEmpty() && text.ru() == null) {
+                issues.add(Issue.error(Code.INVALID_VALUE, "The Russian text (\"ru\") is missing."));
+            } else if (issues.isEmpty() && (stored == null || (text.en() != null && !stored.equals(text.en())))) {
+                issues.add(Issue.error(Code.UNKNOWN_TEXT, "No " + what + " with exactly this English text on " + name + "."));
+            }
+            boolean present = issues.isEmpty() && text.ru().equals(storedRu);
+            boolean replaces = issues.isEmpty() && !present && storedRu != null;
+            if (replaces) {
+                issues.add(Issue.warning(Code.REPLACES_TRANSLATION, "Replaces the current Russian text \"" + storedRu + "\"."));
+            }
+            String original = stored != null ? stored : String.valueOf(text.en());
+            add(Section.TRANSLATIONS, key, name + ": " + what + " \"" + original + "\" → \"" + text.ru() + "\"", issues,
+                    new Change.Translate(target, key, original, text.ru()), present, replaces);
         }
 
         // ---- study notes from the pasted chat text ----

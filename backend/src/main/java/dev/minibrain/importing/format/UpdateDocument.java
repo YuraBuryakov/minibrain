@@ -16,7 +16,8 @@ public record UpdateDocument(
         List<SkillChange> changes,
         List<NewSkill> newSkills,
         List<NewRelation> newRelations,
-        List<SuggestedSkill> suggestedSkills) {
+        List<SuggestedSkill> suggestedSkills,
+        List<Translation> translations) {
 
     public static final String TYPE = "MINIBRAIN_UPDATE";
     public static final List<Integer> SUPPORTED_VERSIONS = List.of(1, 2);
@@ -45,5 +46,13 @@ public record UpdateDocument(
     }
 
     public record SuggestedSkill(String key, LocalizedText name, String reason) {
+    }
+
+    /**
+     * Russian versions for existing texts (answer to a MINIBRAIN_TRANSLATION_REQUEST). {@code en} must be the stored
+     * English text exactly; it identifies which evidence / question is meant.
+     */
+    public record Translation(String skill, LocalizedText name, LocalizedText description,
+                              List<LocalizedText> evidence, List<LocalizedText> openQuestions) {
     }
 }

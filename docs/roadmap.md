@@ -23,6 +23,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 13 | Apply (one transaction; temporary loader removed) | ✅ done |
 | 13b | Session notes as `LearningSession` (EN/RU study notes, reading window from the Skill card) | ✅ done |
 | 13c | Bilingual knowledge (EN/RU columns, MINIBRAIN_UPDATE v2) + UI language switch | ✅ done |
+| 13d | Manage window: export untranslated texts for AI (all / file / per skill), `translations` import | ✅ done |
 | 14 | Revision | ⬜ |
 | 15 | `current.json` export | ⬜ |
 | 16 | Suggested Skills / Fog concept | ⬜ |
@@ -33,8 +34,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 
 Decided direction is noted; details still get discussed when a wish is picked up.
 
-- ~~English and Russian, for UI and knowledge.~~ Done in step 13c. Left: translating the existing
-  English-only skills (one AI import that only adds Russian texts) and translating server-side preview messages.
+- ~~English and Russian, for UI and knowledge.~~ Done in steps 13c-13d. Left: translating server-side preview messages.
 - **Status filter on the canvas: dim, never hide.** Skills not matching the selected status(es) are dimmed;
   relations stay readable. Related: step 17 (focus mode).
 - **"Needs review" = the brief's `active` flag (§15).** A button on the Skill card marks a skill I want to

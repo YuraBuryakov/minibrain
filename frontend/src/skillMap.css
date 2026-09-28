@@ -861,3 +861,42 @@
   outline: 2px solid var(--bone);
   outline-offset: -2px;
 }
+
+/* ---- manage window ---- */
+
+.manage__section h3 {
+  margin: 18px 0 8px;
+  font-family: 'IM Fell English SC', Georgia, serif;
+  font-weight: 400;
+  font-size: 21px;
+  color: var(--bronze);
+}
+
+.manage__list {
+  max-height: 45vh;
+  overflow-y: auto;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+
+.manage__list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(94, 74, 51, 0.4);
+}
+
+.manage__list small {
+  margin-left: 10px;
+  color: var(--bone-dim);
+  font-size: 14px;
+}
+
+.manage__list .import__secondary {
+  padding: 4px 10px;
+}

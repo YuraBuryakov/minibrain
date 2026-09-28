@@ -237,3 +237,16 @@ Format: date · decision · reason · alternatives considered.
   UI texts come from a plain dictionary in `i18n.ts` (no library), passed via React context; knowledge texts use
   `pick(lang, en, ru)` with English fallback. Server-side preview labels and issue messages stay English.
 - **Session prompt** now asks for schemaVersion 2 with bilingual texts.
+
+### 2026-09-28 · Step 13d: Manage window and translation round-trip
+
+- **Decision:** a "Manage" button opens a window whose first section exports texts without a Russian version:
+  copy all for AI, download as a `.md` file (instructions + JSON), or copy one skill.
+  `GET /api/translations/missing[?skill=]` returns `MINIBRAIN_TRANSLATION_REQUEST` (only missing texts, by skill).
+- **Answer comes back through Import:** MINIBRAIN_UPDATE v2 gets a `translations` section
+  (`{skill, name, description, evidence[], openQuestions[]}` with `{en, ru}` pairs). `en` must match the stored
+  English text exactly (that is how the evidence / question is found); unknown text = UNKNOWN_TEXT error.
+  Filling a missing translation is pre-selected; replacing an existing one is REPLACES_TRANSLATION, opt-in.
+- Only EN → RU for now (Russian-only texts are stored as the primary text, so the reverse gap barely exists).
+- The window is where later maintenance goes (backups, `current.json` export).
+- **Import inside Manage:** the Manage window has an "Import the AI answer" button that runs the same import flow (`ImportBody`) in place and returns to Manage with a refreshed list.
