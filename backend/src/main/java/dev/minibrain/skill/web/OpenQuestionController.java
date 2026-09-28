@@ -1,5 +1,8 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.web;
 
+import dev.minibrain.skill.domain.OpenQuestion;
+import dev.minibrain.skill.persistence.OpenQuestionRepository;
+import dev.minibrain.skill.persistence.SkillRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,32 +16,38 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/skills/{key}/evidence")
-public class EvidenceController {
+@RequestMapping("/api/skills/{key}/open-questions")
+public class OpenQuestionController {
 
-    record AddEvidenceRequest(String text) {
+    record AddOpenQuestionRequest(String text) {
     }
 
     private final SkillRepository skills;
-    private final EvidenceRepository evidence;
+    private final OpenQuestionRepository questions;
 
-    public EvidenceController(SkillRepository skills, EvidenceRepository evidence) {
+    public OpenQuestionController(SkillRepository skills, OpenQuestionRepository questions) {
         this.skills = skills;
-        this.evidence = evidence;
+        this.questions = questions;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Evidence add(@PathVariable String key, @RequestBody AddEvidenceRequest request) {
+    public OpenQuestion add(@PathVariable String key, @RequestBody AddOpenQuestionRequest request) {
         if (request.text() == null || request.text().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "text is required");
         }
-        return evidence.add(skillId(key), request.text());
+        return questions.add(skillId(key), request.text());
     }
 
     @GetMapping
-    public List<Evidence> list(@PathVariable String key) {
-        return evidence.findBySkillId(skillId(key));
+    public List<OpenQuestion> list(@PathVariable String key) {
+        return questions.findBySkillId(skillId(key));
+    }
+
+    @PostMapping("/{id}/resolve")
+    public OpenQuestion resolve(@PathVariable String key, @PathVariable long id) {
+        return questions.resolve(skillId(key), id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "open question not found: " + id));
     }
 
     private long skillId(String key) {

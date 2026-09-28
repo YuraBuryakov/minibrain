@@ -1,12 +1,14 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.persistence;
 
+import dev.minibrain.skill.domain.RelationType;
+import dev.minibrain.skill.domain.SkillRelation;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
 
-import static dev.minibrain.skill.SkillRepository.TIMESTAMP;
+import static dev.minibrain.skill.persistence.SkillRepository.TIMESTAMP;
 
 @Repository
 public class SkillRelationRepository {

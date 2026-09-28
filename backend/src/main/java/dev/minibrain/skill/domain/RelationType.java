@@ -1,4 +1,4 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.domain;
 
 public enum RelationType {
     /** Structural: Aggregate PART_OF DDD. */

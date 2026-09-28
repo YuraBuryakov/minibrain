@@ -1,5 +1,6 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.persistence;
 
+import dev.minibrain.skill.domain.OpenQuestion;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
-import static dev.minibrain.skill.SkillRepository.TIMESTAMP;
+import static dev.minibrain.skill.persistence.SkillRepository.TIMESTAMP;
 
 @Repository
 public class OpenQuestionRepository {

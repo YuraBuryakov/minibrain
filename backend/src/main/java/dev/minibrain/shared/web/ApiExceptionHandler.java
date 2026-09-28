@@ -1,4 +1,4 @@
-package dev.minibrain;
+package dev.minibrain.shared.web;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;

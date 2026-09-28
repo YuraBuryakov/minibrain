@@ -54,13 +54,52 @@ backups/     local backups (not in Git)
 
 ## Conventions
 
-- Base package: `dev.minibrain`. Feature packages later: `skill`, `learning`, `importing`, `revision`.
+- Base package: `dev.minibrain`. Package structure: see "Where new classes go" below.
 - Persistence: Spring JDBC (`JdbcClient`), SQL is visible. No JPA for now.
 - Schema changes go through migrations (Flyway, added in step 1).
 - Skill has DB `id` and stable external `key` (e.g. `ddd.aggregate`). JSON contracts use `key`, never numeric ids.
 - Raw JSON (`JsonNode`, `ObjectMapper`) must not leak into the domain. React Flow types must not leak into the backend.
 - Knowledge changes create a Revision. Presentation changes (move node, focus, zoom) do not.
 - Every durable JSON contract has `schemaVersion`.
+
+## Where new classes go
+
+Modules by feature at the top, thin layers inside (DDD-lite, see `docs/decisions.md`).
+
+```text
+backend/src/main/java/dev/minibrain/
+├── <module>/                 skill today; learning, importing, revision later (brief §50)
+│   ├── domain/               the model: records, enums, value objects, domain rules
+│   ├── persistence/          *Repository: JdbcClient + SQL, row mapping (write side + simple reads)
+│   ├── query/                read models for screens: *Query + its result records (own SQL)
+│   └── web/                  *Controller + request records (nested in the controller)
+└── shared/web/               HTTP concerns for all modules (ApiExceptionHandler)
+
+backend/src/main/resources/db/migration/   V<n>__<what>.sql, never edit an applied one
+backend/src/test/java/dev/minibrain/...    same package as the class under test
+```
+
+| New thing | Goes to | Example |
+|---|---|---|
+| Entity / record of the model, enum, value object | `<module>/domain` | `Skill`, `SkillStatus`, future `SkillKey` |
+| Table access (insert, update, find) | `<module>/persistence` | `EvidenceRepository` |
+| Data shaped for one screen / API view | `<module>/query` | `KnowledgeGraph`, `KnowledgeGraphQuery` |
+| REST endpoint | `<module>/web` | `SkillController` |
+| Request body | nested `record` inside its controller | `CreateSkillRequest` |
+| Exception → HTTP status mapping | `shared/web` | `ApiExceptionHandler` |
+| New table or column | new Flyway migration | `V5__add_skill_active.sql` |
+
+Dependency direction: `web → persistence / query → domain`. `domain` depends on nothing in the project
+(no Spring, no JDBC, no JSON). `query` never returns `domain` write types just to save a class.
+
+Rules of thumb:
+
+- Start inside an existing layer. Add a new layer (e.g. `application/` for use-case services) only when a
+  real need appears, e.g. one operation spans several repositories in a transaction (import Apply, step 13).
+- A new top-level module only when a brief §50 module actually starts (`learning`, `importing`, `revision`).
+- No interface with a single implementation (see decisions: repositories stay concrete classes).
+- Shared helpers stay in the package that uses them (e.g. `TIMESTAMP` in `persistence`); move to `shared/`
+  only when a second module needs them.
 
 ## Running
 

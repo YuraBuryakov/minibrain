@@ -94,3 +94,15 @@ Format: date · decision · reason · alternatives considered.
 - **Alternative:** compose from `SkillRepository.findAll()` + relations. Rejected: couples the map to the write model.
 - **Not included:** node positions / layout (separate layer, step 18), counters, `schemaVersion` (API response,
   not a durable contract).
+
+### 2026-09-28 · Package structure: modules by feature, thin layers inside (DDD-lite)
+
+- **Decision:** `dev.minibrain.<module>.{domain, persistence, web, query}`; `shared/web` for cross-module
+  HTTP concerns (`ApiExceptionHandler`). Only `skill` exists today.
+- **Why:** top level matches brief §50 modules (later checkable by Spring Modulith); inside a module the domain,
+  SQL, HTTP and read side are visibly separate. `query/` keeps the step 6 read/write split.
+- **DDD stance:** DDD is the model, not the folders. The model is still mostly data (CRUD); richer domain
+  (e.g. `SkillKey` value object, status/evidence rules, import Apply invariants) is added when rules appear.
+- **Alternatives:** package per sub-feature without layers (hides the domain boundary); full hexagonal with ports
+  and application services (pass-through layers and one-implementation interfaces today).
+- **Cost:** repositories and domain types are `public` across sub-packages.

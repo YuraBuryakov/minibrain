@@ -1,5 +1,7 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.query;
 
+import dev.minibrain.skill.domain.RelationType;
+import dev.minibrain.skill.domain.SkillStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 

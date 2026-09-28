@@ -1,5 +1,7 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.persistence;
 
+import dev.minibrain.skill.domain.Skill;
+import dev.minibrain.skill.domain.SkillStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;

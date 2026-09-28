@@ -1,5 +1,7 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.web;
 
+import dev.minibrain.skill.query.KnowledgeGraph;
+import dev.minibrain.skill.query.KnowledgeGraphQuery;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

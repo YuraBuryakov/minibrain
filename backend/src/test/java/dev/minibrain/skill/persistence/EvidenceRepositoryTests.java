@@ -1,5 +1,8 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.persistence;
 
+import dev.minibrain.skill.domain.Evidence;
+import dev.minibrain.skill.domain.Skill;
+import dev.minibrain.skill.domain.SkillStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

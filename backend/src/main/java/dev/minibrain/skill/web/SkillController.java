@@ -1,5 +1,8 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.web;
 
+import dev.minibrain.skill.domain.Skill;
+import dev.minibrain.skill.domain.SkillStatus;
+import dev.minibrain.skill.persistence.SkillRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -1,5 +1,10 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.query;
 
+import dev.minibrain.skill.domain.RelationType;
+import dev.minibrain.skill.domain.Skill;
+import dev.minibrain.skill.domain.SkillStatus;
+import dev.minibrain.skill.persistence.SkillRelationRepository;
+import dev.minibrain.skill.persistence.SkillRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

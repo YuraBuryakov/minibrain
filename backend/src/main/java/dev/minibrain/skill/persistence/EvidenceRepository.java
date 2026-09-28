@@ -1,5 +1,6 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.persistence;
 
+import dev.minibrain.skill.domain.Evidence;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
@@ -8,7 +9,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import static dev.minibrain.skill.SkillRepository.TIMESTAMP;
+import static dev.minibrain.skill.persistence.SkillRepository.TIMESTAMP;
 
 @Repository
 public class EvidenceRepository {

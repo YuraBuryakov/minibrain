@@ -1,4 +1,4 @@
-package dev.minibrain.skill;
+package dev.minibrain.skill.domain;
 
 import java.time.Instant;
 
