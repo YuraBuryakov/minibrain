@@ -3,6 +3,8 @@ package dev.minibrain.skill.web;
 import dev.minibrain.skill.domain.Skill;
 import dev.minibrain.skill.domain.SkillStatus;
 import dev.minibrain.skill.persistence.SkillRepository;
+import dev.minibrain.skill.query.SkillDetails;
+import dev.minibrain.skill.query.SkillDetailsQuery;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,9 +25,11 @@ public class SkillController {
     }
 
     private final SkillRepository skills;
+    private final SkillDetailsQuery detailsQuery;
 
-    public SkillController(SkillRepository skills) {
+    public SkillController(SkillRepository skills, SkillDetailsQuery detailsQuery) {
         this.skills = skills;
+        this.detailsQuery = detailsQuery;
     }
 
     @PostMapping
@@ -46,6 +50,12 @@ public class SkillController {
     @GetMapping("/{key}")
     public Skill get(@PathVariable String key) {
         return skills.findByKey(key)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "skill not found: " + key));
+    }
+
+    @GetMapping("/{key}/details")
+    public SkillDetails details(@PathVariable String key) {
+        return detailsQuery.find(key)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "skill not found: " + key));
     }
 

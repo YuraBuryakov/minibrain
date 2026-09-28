@@ -138,3 +138,15 @@ Format: date · decision · reason · alternatives considered.
 - **Code:** `layout.ts` (pure positions), `skillMapParts.tsx` (custom nodes / trimmed straight edge),
   `toFlow.ts` (adapter), `skillMap.css`. Legend is a native `<details>`.
 - **Left for step 18:** drag, AUTO/PINNED, saved positions. React Flow attribution stays visible (license).
+
+### 2026-09-28 · Step 8: Skill card
+
+- **Decision:** `GET /api/skills/{key}/details` served by `SkillDetailsQuery` (read side, brief §47 GetSkillDetails):
+  skill + evidence + questions (open first) + relations seen from this skill (`outgoing`, other skill's key/name/status).
+  Frontend: one `useQuery(['skill', key])`, read-only card as a right-side panel.
+- **Why:** same light-CQRS split as the graph (step 6); one request, one shape for one screen.
+- **Alternative:** compose four existing endpoints on the client. Rejected: the card's shape would live in the client.
+- **UX:** click an orb to open, `Esc` / close button / click on empty map to close; related skills in the card are
+  links; the selected skill is panned into view left of the card (instant with reduced motion).
+  Selection state is a `useState` in `App`, no state library.
+- **Not included:** editing (knowledge changes go through imports), focus mode (step 17), skill in the URL.

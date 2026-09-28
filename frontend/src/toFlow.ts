@@ -15,7 +15,7 @@ const ARROW_COLOR: Record<RelationType, string> = {
 
 const titleCase = (area: string) => area.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
-export function toFlow(graph: KnowledgeGraph): { nodes: Node[]; edges: Edge[] } {
+export function toFlow(graph: KnowledgeGraph, selectedKey: string | null = null): { nodes: Node[]; edges: Edge[] } {
   const { areas, positions } = radialLayout(graph.nodes)
   const hubKeys = new Set(areas.map((a) => a.hubSkillKey).filter(Boolean))
   const radiusOf = new Map<string, number>([['core', RADIUS.core]])
@@ -37,6 +37,7 @@ export function toFlow(graph: KnowledgeGraph): { nodes: Node[]; edges: Edge[] } 
       type: 'skill',
       position: positions.get(skill.key)!,
       data: { name: skill.name, status: skill.status, hub },
+      selected: skill.key === selectedKey,
     })
   }
 

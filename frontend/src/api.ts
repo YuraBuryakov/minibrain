@@ -12,3 +12,23 @@ export async function fetchGraph(): Promise<KnowledgeGraph> {
   if (!response.ok) throw new Error(`GET /api/graph failed: ${response.status}`)
   return response.json()
 }
+
+// Mirrors dev.minibrain.skill.query.SkillDetails (the Skill card).
+export type SkillDetails = {
+  key: string
+  name: string
+  description: string | null
+  status: SkillStatus
+  createdAt: string
+  updatedAt: string
+  evidence: { text: string; createdAt: string }[]
+  openQuestions: { text: string; createdAt: string; resolvedAt: string | null }[]
+  // Seen from this skill: outgoing = this skill is the "from" side; key/name/status belong to the other skill.
+  relations: { type: RelationType; outgoing: boolean; key: string; name: string; status: SkillStatus }[]
+}
+
+export async function fetchSkillDetails(key: string): Promise<SkillDetails> {
+  const response = await fetch(`/api/skills/${encodeURIComponent(key)}/details`)
+  if (!response.ok) throw new Error(`GET skill ${key} failed: ${response.status}`)
+  return response.json()
+}

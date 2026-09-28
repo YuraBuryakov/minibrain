@@ -15,7 +15,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 6 | Basic graph query | ✅ done |
 | 7 | Minimal React Skill Map (create `frontend/`) | ✅ done |
 | 7b | Game-like look: radial area clusters + dark fantasy style | ✅ done |
-| 8 | Select node + Skill card | ⬜ |
+| 8 | Select node + Skill card | ✅ done |
 | 9 | AI Context export (`MINIBRAIN_CONTEXT`) | ⬜ |
 | 10 | `MINIBRAIN_UPDATE` parser | ⬜ |
 | 11 | Validation | ⬜ |
