@@ -132,6 +132,30 @@
   background: var(--night);
 }
 
+/* Suggested skill in the fog: translucent, dashed, a "?" inside. */
+.orb--fog {
+  border-style: dashed;
+  border-color: var(--bone-dim);
+  background: radial-gradient(circle at 35% 30%, var(--ash-light), var(--night) 75%);
+  opacity: 0.5;
+}
+
+.react-flow__node:hover .orb--fog,
+.react-flow__node.selected .orb--fog {
+  opacity: 0.9;
+}
+
+.orb__fog-mark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--bone);
+  pointer-events: none;
+}
+
 /* The centre of the tree. */
 .core {
   width: 60px;
@@ -174,6 +198,26 @@
   stroke: var(--gilded);
   stroke-opacity: 0.75;
   stroke-dasharray: 8 5;
+}
+
+.edge-fog .react-flow__edge-path {
+  stroke: var(--bone-dim);
+  stroke-dasharray: 2 6;
+  opacity: 0.5;
+}
+
+/* Fog of war: above the map, never catches clicks. */
+.fog-of-war {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.fog-of-war__sheet {
+  fill: var(--abyss);
+  opacity: 0.85;
 }
 
 /* ---- legend ---- */

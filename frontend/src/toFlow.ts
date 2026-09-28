@@ -1,11 +1,12 @@
 import { MarkerType, type Edge, type Node } from '@xyflow/react'
 import type { KnowledgeGraph, RelationType } from './api'
 import { pick, type Lang } from './i18n'
-import { radialLayout } from './layout'
+import { fogPositions, radialLayout } from './layout'
 import { RADIUS, type RuneEdge } from './skillMapParts'
 
 // The only place where React Flow types meet our graph (brief §31: frontend adapts, backend stays generic).
 // Adds presentation-only nodes: the core in the centre and a sigil for areas without their own hub skill.
+// Suggestions (fog) become "fog:<key>" nodes, so they never clash with a skill of the same key.
 
 const ARROW_COLOR: Record<RelationType, string> = {
   PART_OF: '#8a7f6e',
@@ -16,8 +17,11 @@ const ARROW_COLOR: Record<RelationType, string> = {
 
 const titleCase = (area: string) => area.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
+export const FOG_PREFIX = 'fog:'
+
 export function toFlow(graph: KnowledgeGraph, selectedKey: string | null, lang: Lang): { nodes: Node[]; edges: Edge[] } {
-  const { areas, positions } = radialLayout(graph.nodes)
+  const layout = radialLayout(graph.nodes)
+  const { areas, positions } = layout
   const hubKeys = new Set(areas.map((a) => a.hubSkillKey).filter(Boolean))
   const radiusOf = new Map<string, number>([['core', RADIUS.core]])
 
@@ -40,6 +44,13 @@ export function toFlow(graph: KnowledgeGraph, selectedKey: string | null, lang: 
       data: { name: pick(lang, skill.name, skill.nameRu), status: skill.status, hub },
       selected: skill.key === selectedKey,
     })
+  }
+
+  const fog = fogPositions(graph.suggestions, layout)
+  for (const s of graph.suggestions) {
+    const id = FOG_PREFIX + s.key
+    radiusOf.set(id, RADIUS.skill)
+    nodes.push({ id, type: 'fog', position: fog.get(s.key)!, data: { name: pick(lang, s.name, s.nameRu) }, selected: id === selectedKey })
   }
 
   const rune = (id: string, source: string, target: string, className: string, extra: Partial<RuneEdge> = {}): RuneEdge => ({
@@ -71,6 +82,11 @@ export function toFlow(graph: KnowledgeGraph, selectedKey: string | null, lang: 
         markerEnd: { type: MarkerType.ArrowClosed, color: ARROW_COLOR[relation.type], width: 14, height: 14 },
       }),
     )
+  }
+
+  // Fog: a faint dotted line from the source skill to its suggestion.
+  for (const s of graph.suggestions) {
+    if (s.from && positions.has(s.from)) edges.push(rune(`fog-edge:${s.key}`, s.from, FOG_PREFIX + s.key, 'edge-fog'))
   }
 
   return { nodes, edges }

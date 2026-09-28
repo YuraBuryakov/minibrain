@@ -5,12 +5,24 @@ export type RelationType = 'PART_OF' | 'REQUIRES' | 'RELATED_TO' | 'LEADS_TO'
 
 export type GraphNode = { key: string; name: string; nameRu: string | null; status: SkillStatus }
 export type GraphEdge = { from: string; type: RelationType; to: string }
-export type KnowledgeGraph = { nodes: GraphNode[]; edges: GraphEdge[] }
+// A suggested skill in the fog: not a skill yet. from = its source skill key (may be null or unknown).
+export type GraphSuggestion = { key: string; name: string; nameRu: string | null; reason: string | null; reasonRu: string | null; from: string | null }
+export type KnowledgeGraph = { nodes: GraphNode[]; edges: GraphEdge[]; suggestions: GraphSuggestion[] }
 
 export async function fetchGraph(): Promise<KnowledgeGraph> {
   const response = await fetch('/api/graph')
   if (!response.ok) throw new Error(`GET /api/graph failed: ${response.status}`)
   return response.json()
+}
+
+export async function unlockSuggestion(key: string): Promise<void> {
+  const response = await fetch(`/api/suggestions/${encodeURIComponent(key)}/unlock`, { method: 'POST' })
+  if (!response.ok) throw new Error(`Unlock ${key} failed: ${response.status}`)
+}
+
+export async function dismissSuggestion(key: string): Promise<void> {
+  const response = await fetch(`/api/suggestions/${encodeURIComponent(key)}/dismiss`, { method: 'POST' })
+  if (!response.ok) throw new Error(`Dismiss ${key} failed: ${response.status}`)
 }
 
 // Mirrors dev.minibrain.skill.query.SkillDetails (the Skill card). *Ru: optional Russian version (null = use English).

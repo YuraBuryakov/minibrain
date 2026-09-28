@@ -279,3 +279,22 @@ Format: date · decision · reason · alternatives considered.
   `exports/`; snapshots and restore with preview are a later slice.
 - **Where:** module `importing` (`format/CurrentState`, `query/CurrentStateQuery`, `web/ExportController`). Restore
   will read the same contract, and `skill` must not read `learning` tables. No new module (brief §50).
+
+### 2026-09-29 · Step 16: Suggested Skills and fog of war
+
+- **Model:** own table `suggested_skill` (V8), not a SUGGESTED status: a suggestion is not a skill (brief §14), so it
+  has no status, evidence or questions and never needs exceptions in skill code. The source is a plain key
+  (`source_skill_key`), not a foreign key: it may be missing.
+- **Import:** a ticked suggestion is stored in the fog instead of becoming a skill, and suggestions are pre-selected
+  now (storing is harmless). MINIBRAIN_UPDATE `suggestedSkills[]` got optional `from` and a bilingual `reason`
+  (plain strings still load). A dismissed suggestion counts as ALREADY_PRESENT, so it is not offered again.
+- **Decisions on the map:** `POST /api/suggestions/{key}/unlock` creates a DISCOVERED skill (reason = description)
+  plus "source LEADS_TO new skill" when the source exists, deletes the suggestion, writes a MANUAL revision.
+  `.../dismiss` sets `dismissed_at`. Storing or dismissing a suggestion writes no revision: it is not knowledge.
+- **Read side:** `/api/graph` carries open `suggestions`; current.json v2 carries all of them (dismissed too).
+- **UI:** a `fog:<key>` node (translucent dashed orb with "?") just outside its source skill, a faint dotted line
+  to it, and a suggestion card with Unlock / Hide. Fog of war is presentation only: an SVG sheet in flow
+  coordinates with a hole = convex hull of all known nodes, widened and blurred. No fog between areas, only
+  beyond the outermost skills, so suggestions sitting outside look hidden in it.
+- **Not done:** suggestions are not sent in MINIBRAIN_CONTEXT yet (the AI may suggest an existing suggestion again;
+  the import then marks it ALREADY_PRESENT). No animated smoke.

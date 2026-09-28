@@ -1,15 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { Controls, Panel, ReactFlow, type ReactFlowInstance } from '@xyflow/react'
+import { Controls, Panel, ReactFlow, ViewportPortal, type ReactFlowInstance } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { fetchGraph, type RelationType, type SkillStatus } from './api'
-import { initialLang, LangContext, saveLang, useT, type Lang } from './i18n'
+import { initialLang, LangContext, pick, saveLang, useT, type Lang } from './i18n'
 import { ImportButton } from './ImportDialog'
 import { ManageButton } from './ManageDialog'
 import { SkillCard } from './SkillCard'
-import { edgeTypes, nodeTypes } from './skillMapParts'
+import { SuggestionCard } from './SuggestionCard'
+import { edgeTypes, FogOfWar, nodeTypes } from './skillMapParts'
 import './skillMap.css'
-import { toFlow } from './toFlow'
+import { FOG_PREFIX, toFlow } from './toFlow'
 
 const STATUSES: SkillStatus[] = ['DISCOVERED', 'LEARNING', 'UNDERSTOOD', 'APPLIED', 'MASTERED']
 const RELATIONS: RelationType[] = ['REQUIRES', 'LEADS_TO', 'RELATED_TO', 'PART_OF']
@@ -35,6 +36,8 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
   const [selected, setSelected] = useState<string | null>(null)
   const flow = useMemo(() => (graph.data ? toFlow(graph.data, selected, lang) : null), [graph.data, selected, lang])
   const [map, setMap] = useState<ReactFlowInstance | null>(null)
+  // Known land clears the fog: every node except the suggestions themselves.
+  const known = useMemo(() => flow?.nodes.filter((n) => n.type !== 'fog').map((n) => n.position) ?? [], [flow])
 
   // Bring the selected skill into view, left of the card (which covers the right 400px).
   useEffect(() => {
@@ -52,6 +55,13 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [])
 
+  // A selected fog node shows the suggestion card instead of the Skill card.
+  const suggestion = selected?.startsWith(FOG_PREFIX)
+    ? graph.data?.suggestions.find((s) => FOG_PREFIX + s.key === selected)
+    : undefined
+  const source = suggestion?.from ? graph.data?.nodes.find((n) => n.key === suggestion.from) : undefined
+  const sourceName = source ? pick(lang, source.name, source.nameRu) : null
+
   if (graph.isPending) return <p className="message">{t('loading')}</p>
   if (graph.isError) return <p className="message">{t('loadFailed', { error: graph.error.message })}</p>
 
@@ -60,7 +70,7 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
       <ReactFlow
         nodes={flow!.nodes}
         edges={flow!.edges}
-        onNodeClick={(_, node) => node.type === 'skill' && setSelected(node.id)}
+        onNodeClick={(_, node) => (node.type === 'skill' || node.type === 'fog') && setSelected(node.id)}
         onPaneClick={() => setSelected(null)}
         onInit={setMap}
         nodeTypes={nodeTypes}
@@ -73,6 +83,9 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
         fitView
         fitViewOptions={{ padding: 0.12 }}
       >
+        <ViewportPortal>
+          <FogOfWar known={known} />
+        </ViewportPortal>
         <Controls showInteractive={false} />
         <Panel position="top-left" className="map-toolbar">
           <ImportButton />
@@ -93,6 +106,10 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
                   {t(`legend.${status}`)}
                 </li>
               ))}
+              <li>
+                <span className="orb orb--fog" />
+                {t('legend.fog')}
+              </li>
               {RELATIONS.map((type) => (
                 <li key={type}>
                   <span className={`legend__line legend__line--${type.toLowerCase().replace('_', '-')}`} />
@@ -103,7 +120,17 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
           </details>
         </Panel>
       </ReactFlow>
-      {selected && <SkillCard skillKey={selected} onSelect={setSelected} onClose={() => setSelected(null)} />}
+      {suggestion ? (
+        <SuggestionCard
+          key={suggestion.key}
+          suggestion={suggestion}
+          sourceName={sourceName}
+          onUnlocked={setSelected}
+          onClose={() => setSelected(null)}
+        />
+      ) : (
+        selected && !selected.startsWith(FOG_PREFIX) && <SkillCard skillKey={selected} onSelect={setSelected} onClose={() => setSelected(null)} />
+      )}
     </div>
   )
 }

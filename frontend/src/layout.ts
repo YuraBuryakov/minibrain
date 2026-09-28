@@ -1,4 +1,4 @@
-import type { GraphNode } from './api'
+import type { GraphNode, GraphSuggestion } from './api'
 
 // Radial skill-tree layout (Path of Exile style), pure: graph nodes in, coordinates out.
 // Areas come from the key prefix ("ddd.aggregate" -> "ddd") and sit on a ring around the centre;
@@ -17,6 +17,8 @@ const FAN_STEP = 0.7 // radians between neighbouring skills of one area
 const FAN_MAX = 1.7 * Math.PI
 const SKILL_RING_MIN = 150 // distance from the hub to its skills
 const SKILL_RING_PER_SKILL = 30
+const FOG_DISTANCE = 120 // from the source skill, further out from the centre
+const FOG_STEP = 1 // radians between suggestions of one source
 
 export function radialLayout(nodes: GraphNode[]): RadialLayout {
   const byArea = new Map<string, GraphNode[]>()
@@ -48,4 +50,43 @@ export function radialLayout(nodes: GraphNode[]): RadialLayout {
   })
 
   return { areas, positions }
+}
+
+/**
+ * Suggestions sit just outside their source skill (away from the centre), fanned when one source has several.
+ * Without a known source they hang outside their area hub (area from the key), or on an outer ring.
+ */
+export function fogPositions(suggestions: GraphSuggestion[], layout: RadialLayout): Map<string, Point> {
+  const hubs = new Map(layout.areas.map((a) => [a.name, a.hub]))
+  const anchorOf = (s: GraphSuggestion) => (s.from && layout.positions.get(s.from)) || hubs.get(areaOf(s.key)) || null
+  const siblings = new Map<string, number>() // anchor id -> suggestions placed there so far
+  const positions = new Map<string, Point>()
+
+  suggestions.forEach((s, i) => {
+    const anchor = anchorOf(s) ?? { x: Math.cos(i) * 900, y: Math.sin(i) * 900 }
+    const id = `${anchor.x},${anchor.y}`
+    const n = siblings.get(id) ?? 0
+    siblings.set(id, n + 1)
+    const outward = Math.atan2(anchor.y, anchor.x)
+    const a = outward + (n % 2 === 0 ? 1 : -1) * Math.ceil(n / 2) * FOG_STEP // 0, +1, -1, +2 ... steps around outward
+    positions.set(s.key, { x: anchor.x + Math.cos(a) * FOG_DISTANCE, y: anchor.y + Math.sin(a) * FOG_DISTANCE })
+  })
+  return positions
+}
+
+/** Convex hull (Andrew's monotone chain), counter-clockwise. Used for the fog: everything inside is known land. */
+export function convexHull(points: Point[]): Point[] {
+  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y)
+  if (sorted.length < 3) return sorted
+  const cross = (o: Point, a: Point, b: Point) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
+  const half = (list: Point[]) => {
+    const chain: Point[] = []
+    for (const p of list) {
+      while (chain.length >= 2 && cross(chain[chain.length - 2], chain[chain.length - 1], p) <= 0) chain.pop()
+      chain.push(p)
+    }
+    chain.pop() // the last point starts the other half
+    return chain
+  }
+  return [...half(sorted), ...half([...sorted].reverse())]
 }
