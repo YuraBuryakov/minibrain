@@ -84,3 +84,13 @@ Format: date · decision · reason · alternatives considered.
   The Skill card (step 8) needs both directions.
 - **Deferred:** "REQUIRES makes RELATED_TO redundant" is a warning, not a constraint (step 11 Validation);
   RELATED_TO symmetry (A→B and B→A are two rows); cycle detection; delete.
+
+### 2026-09-28 · Step 6: graph query as a separate read model (light CQRS)
+
+- **Decision:** `GET /api/graph` served by `KnowledgeGraphQuery` with its own SQL and its own types
+  (`KnowledgeGraph.Node {key, name, status}`, `KnowledgeGraph.Edge {from, type, to}`). No repositories involved.
+- **Why:** brief §47-48: the graph UI reads query models, not the write model. A node is not a Skill and will
+  grow UI fields (e.g. evidence / open question counters) without touching `Skill`.
+- **Alternative:** compose from `SkillRepository.findAll()` + relations. Rejected: couples the map to the write model.
+- **Not included:** node positions / layout (separate layer, step 18), counters, `schemaVersion` (API response,
+  not a durable contract).

@@ -12,7 +12,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 3 | Evidence | ✅ done |
 | 4 | Open Questions | ✅ done |
 | 5 | Relations | ✅ done |
-| 6 | Basic graph query | ⬜ |
+| 6 | Basic graph query | ✅ done |
 | 7 | Minimal React Skill Map (create `frontend/`) | ⬜ |
 | 8 | Select node + Skill card | ⬜ |
 | 9 | AI Context export (`MINIBRAIN_CONTEXT`) | ⬜ |
