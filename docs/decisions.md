@@ -74,3 +74,13 @@ Format: date · decision · reason · alternatives considered.
 - **Why:** Spring has no SQLite error codes, so every SQLite error was `UncategorizedSQLException` → 500.
   sqlite-jdbc sets no SQLState and uses code 19 for all constraints, so UNIQUE / FK / CHECK cannot be told apart
   by code; through the API only UNIQUE can realistically fire (FK and CHECK are guarded in Java).
+
+### 2026-09-28 · Step 5: Skill relations
+
+- **Decision:** `skill_relation` with composite primary key `(from_skill_id, to_skill_id, type)`, no surrogate id;
+  `CHECK (from <> to)`; index on `to_skill_id` for incoming lookups. API speaks keys only:
+  `POST /api/skills/{key}/relations {type, to}`, `GET` returns outgoing + incoming as `{from, type, to}`.
+- **Why:** a relation is fully identified by the triple; the composite key forbids duplicates for free.
+  The Skill card (step 8) needs both directions.
+- **Deferred:** "REQUIRES makes RELATED_TO redundant" is a warning, not a constraint (step 11 Validation);
+  RELATED_TO symmetry (A→B and B→A are two rows); cycle detection; delete.

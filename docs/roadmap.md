@@ -11,7 +11,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 2 | Read Skill data back | ✅ done |
 | 3 | Evidence | ✅ done |
 | 4 | Open Questions | ✅ done |
-| 5 | Relations | ⬜ |
+| 5 | Relations | ✅ done |
 | 6 | Basic graph query | ⬜ |
 | 7 | Minimal React Skill Map (create `frontend/`) | ⬜ |
 | 8 | Select node + Skill card | ⬜ |
