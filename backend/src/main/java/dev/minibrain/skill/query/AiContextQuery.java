@@ -18,9 +18,11 @@ public class AiContextQuery {
     static final int MAX_RELATED = 7;
 
     private final SkillDetailsQuery details;
+    private final KnowledgeGraphQuery graph;
 
-    public AiContextQuery(SkillDetailsQuery details) {
+    public AiContextQuery(SkillDetailsQuery details, KnowledgeGraphQuery graph) {
         this.details = details;
+        this.graph = graph;
     }
 
     public Optional<AiContext> find(String key, String goal) {
@@ -35,6 +37,8 @@ public class AiContextQuery {
                         .limit(MAX_RELATED)
                         .map(r -> new AiContext.RelatedSkill(r.key(), r.name(), r.status(), r.type(), r.outgoing() ? "outgoing" : "incoming"))
                         .toList(),
+                // ponytail: all skills; limit to the focus area once the map holds hundreds of skills.
+                graph.get().nodes().stream().map(n -> new AiContext.KnownSkill(n.key(), n.name())).toList(),
                 goal == null || goal.isBlank() ? null : goal.strip()));
     }
 

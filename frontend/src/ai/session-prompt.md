@@ -65,7 +65,14 @@ Rules:
   Statuses: `DISCOVERED`, `LEARNING`, `UNDERSTOOD`, `APPLIED`, `MASTERED` (rare).
 - `openQuestionsResolved`: copy the question text exactly as in the context.
 - A new skill only for an independent unit of learning, not for every term that came up.
+- Before creating a skill, check `knownSkills` in the context: if it already exists (even under a slightly
+  different name), use its `key` in `changes` instead of creating a duplicate.
+- **Every new skill must be connected to the tree**: at least one relation in `newRelations` to the focus skill
+  or another skill from `knownSkills` (for example `PART_OF` its area parent, or `REQUIRES` a prerequisite).
+  A skill with no relation floats outside the map.
+- Use existing keys exactly as written in the context. Never invent a key for a skill that should already exist.
 - Relation types: `PART_OF`, `REQUIRES`, `RELATED_TO`, `LEADS_TO`. If `A REQUIRES B`, skip `A RELATED_TO B`.
+  Do not repeat relations that the context already lists in `relatedSkills`.
 - `key`: lowercase, dot-separated area prefix, words joined by `-` (e.g. `ddd.aggregate`).
 - No comments inside the JSON, no trailing commas.
 

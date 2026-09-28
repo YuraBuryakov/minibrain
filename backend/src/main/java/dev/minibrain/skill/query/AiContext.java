@@ -18,6 +18,7 @@ public record AiContext(
         List<String> evidence,
         List<String> openQuestions,
         List<RelatedSkill> relatedSkills,
+        List<KnownSkill> knownSkills,
         String goal) {
 
     public static final String TYPE = "MINIBRAIN_CONTEXT";
@@ -30,6 +31,13 @@ public record AiContext(
      * {@code relation} + {@code direction}: "outgoing" reads "focus REQUIRES this skill",
      * "incoming" reads "this skill REQUIRES focus". (Extension of the brief example, which has no relation.)
      */
+    /**
+     * Every skill in MiniBrain, key + name only (not the graph: no evidence, no relations).
+     * Lets the AI link new skills to existing ones and avoid duplicates. (Extension of the brief example.)
+     */
+    public record KnownSkill(String key, String name) {
+    }
+
     public record RelatedSkill(String key, String name, SkillStatus status, RelationType relation, String direction) {
     }
 }

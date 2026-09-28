@@ -65,6 +65,9 @@ class AiContextQueryTests {
         assertThat(context.relatedSkills().getFirst())
                 .isEqualTo(new AiContext.RelatedSkill("ctx.prerequisite", "Prerequisite", SkillStatus.APPLIED, RelationType.REQUIRES, "outgoing"));
         assertThat(context.relatedSkills()).extracting(AiContext.RelatedSkill::key).doesNotContain("ctx.dependant");
+        assertThat(context.knownSkills()).contains(
+                new AiContext.KnownSkill("ctx.focus", "Focus"),
+                new AiContext.KnownSkill("ctx.dependant", "Dependant"));
         assertThat(context.goal()).isNull();
     }
 

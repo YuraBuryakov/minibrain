@@ -17,10 +17,11 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 7b | Game-like look: radial area clusters + dark fantasy style | ✅ done |
 | 8 | Select node + Skill card | ✅ done |
 | 9 | AI Context export (`MINIBRAIN_CONTEXT`) | ✅ done |
-| 10 | `MINIBRAIN_UPDATE` parser (design together with: bilingual content, session notes as `LearningSession`, see Backlog) | ⬜ |
-| 11 | Validation | ⬜ |
+| 10 | `MINIBRAIN_UPDATE` parser (`POST /api/imports/preview`) | ✅ done |
+| 11 | Validation (per-item issues, brief §21 + orphan / redundant relation) | ✅ done |
 | 12 | Preview / Change Set | ⬜ |
-| 13 | Apply | ⬜ |
+| 13 | Apply (then remove `scripts/load-update.ps1`) | ⬜ |
+| 13b | Session notes as `LearningSession` + bilingual content (see Backlog) | ⬜ |
 | 14 | Revision | ⬜ |
 | 15 | `current.json` export | ⬜ |
 | 16 | Suggested Skills / Fog concept | ⬜ |

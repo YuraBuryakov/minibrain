@@ -174,3 +174,19 @@ Format: date · decision · reason · alternatives considered.
   example, mistakes, trade-offs, links to my skills), gives English originals for terms, then verifies.
   On "Export MiniBrain" it first writes bilingual EN/RU study notes, then the JSON. Storing those notes
   (`LearningSession`, brief §50) is planned into the import design (steps 10-13).
+
+### 2026-09-28 · Steps 10-11: import preview (module `importing`)
+
+- **Decision:** `POST /api/imports/preview` takes raw text (file content or pasted chat text) and returns an
+  `ImportPreview`: items grouped by the brief §20 sections, each with a verdict (READY / ALREADY_PRESENT / INVALID),
+  issues (brief §21 codes + ORPHAN_SKILL, REDUNDANT_RELATION, UNKNOWN_OPEN_QUESTION) and a default selection.
+  Nothing is written.
+- **Per-item validation:** one bad line never blocks the file. Warnings keep an item applicable; STATUS_DOWNGRADE,
+  REDUNDANT_RELATION and suggested skills are not pre-selected; ORPHAN_SKILL is (my call: warning, not block).
+- **Parsing:** `format/UpdateDocument` mirrors the JSON with enum values as Strings (an unknown status invalidates
+  one item, not the file). Pasted chat text: the fenced ```json block containing MINIBRAIN_UPDATE is extracted.
+- **New layers:** `importing/application` (use cases over several queries; Apply in step 13 joins it) and
+  `importing/format` (external contract). No `importing/domain`: no domain rules of its own yet.
+  `Change` is a sealed interface so Apply can switch over all kinds exhaustively.
+- **Relations for the AI:** MINIBRAIN_CONTEXT gets `knownSkills` (key + name of every skill; not the graph);
+  the session prompt requires every new skill to be linked and existing keys to be reused exactly.

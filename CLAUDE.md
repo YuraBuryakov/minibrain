@@ -68,11 +68,13 @@ Modules by feature at the top, thin layers inside (DDD-lite, see `docs/decisions
 
 ```text
 backend/src/main/java/dev/minibrain/
-├── <module>/                 skill today; learning, importing, revision later (brief §50)
+├── <module>/                 skill, importing today; learning, revision later (brief §50)
 │   ├── domain/               the model: records, enums, value objects, domain rules
 │   ├── persistence/          *Repository: JdbcClient + SQL, row mapping (write side + simple reads)
 │   ├── query/                read models for screens: *Query + its result records (own SQL)
-│   └── web/                  *Controller + request records (nested in the controller)
+│   ├── web/                  *Controller + request records (nested in the controller)
+│   ├── application/          use-case services spanning several repositories/queries (importing: preview, apply)
+│   └── format/               1:1 mirrors of external JSON contracts (importing: MINIBRAIN_UPDATE)
 └── shared/web/               HTTP concerns for all modules (ApiExceptionHandler)
 
 backend/src/main/resources/db/migration/   V<n>__<what>.sql, never edit an applied one
@@ -87,9 +89,12 @@ backend/src/test/java/dev/minibrain/...    same package as the class under test
 | REST endpoint | `<module>/web` | `SkillController` |
 | Request body | nested `record` inside its controller | `CreateSkillRequest` |
 | Exception → HTTP status mapping | `shared/web` | `ApiExceptionHandler` |
+| Use case over several repositories / queries | `<module>/application` | `ImportPreviewer` |
+| Record mirroring an incoming JSON file | `<module>/format` | `UpdateDocument` |
 | New table or column | new Flyway migration | `V5__add_skill_active.sql` |
 
-Dependency direction: `web → persistence / query → domain`. `domain` depends on nothing in the project
+Dependency direction: `web → application → persistence / query → domain`. A module may read another module's
+`query` / `persistence` (importing reads skill); never the other way round. `domain` depends on nothing in the project
 (no Spring, no JDBC, no JSON). `query` never returns `domain` write types just to save a class.
 
 Rules of thumb:
