@@ -27,7 +27,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 14 | Revision (module `revision`, history in Manage, initial state rebuilt) | ✅ done |
 | 15 | `current.json` export (download from Manage; snapshots / restore later) | ✅ done |
 | 16 | Suggested Skills / Fog (stored suggestions, `?` nodes, unlock / dismiss, fog of war beyond known land) | ✅ done |
-| 17 | Focus mode / search (must have: find a skill by its name, EN or RU) | ⬜ |
+| 17 | Focus mode / search (search by EN/RU name or key, automatic focus, status filter in the legend) | ✅ done |
 | 18 | Layout improvements (radial auto layout done early in 7b; left: AUTO/PINNED, drag, saved positions) | ⬜ |
 
 ## Backlog (my wishes, not scheduled yet)
@@ -35,8 +35,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 Decided direction is noted; details still get discussed when a wish is picked up.
 
 - ~~English and Russian, for UI and knowledge.~~ Done in steps 13c-13d. Left: translating server-side preview messages.
-- **Status filter on the canvas: dim, never hide.** Skills not matching the selected status(es) are dimmed;
-  relations stay readable. Related: step 17 (focus mode).
+- ~~Status filter on the canvas: dim, never hide.~~ Done in step 17 (legend).
 - **"Needs review" = the brief's `active` flag (§15).** A button on the Skill card marks a skill I want to
   revisit because I no longer remember it well. Manual mark, not spaced-repetition scheduling.
   Open: button wording, how the map shows it (brief suggests subtle pulsing). Per brief: no Revision.

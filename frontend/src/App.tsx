@@ -7,6 +7,7 @@ import { initialLang, LangContext, pick, saveLang, useT, type Lang } from './i18
 import { ImportButton } from './ImportDialog'
 import { ManageButton } from './ManageDialog'
 import { SkillCard } from './SkillCard'
+import { SkillSearch } from './SkillSearch'
 import { SuggestionCard } from './SuggestionCard'
 import { edgeTypes, FogOfWar, nodeTypes } from './skillMapParts'
 import './skillMap.css'
@@ -34,7 +35,15 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
   const t = useT()
   const graph = useQuery({ queryKey: ['graph'], queryFn: fetchGraph })
   const [selected, setSelected] = useState<string | null>(null)
-  const flow = useMemo(() => (graph.data ? toFlow(graph.data, selected, lang) : null), [graph.data, selected, lang])
+  // Status filter in the legend: empty = all statuses. Dims the others, never hides them.
+  const [statuses, setStatuses] = useState<ReadonlySet<SkillStatus>>(new Set())
+  const flow = useMemo(() => (graph.data ? toFlow(graph.data, selected, lang, statuses) : null), [graph.data, selected, lang, statuses])
+  const toggleStatus = (status: SkillStatus) =>
+    setStatuses((current) => {
+      const next = new Set(current)
+      if (!next.delete(status)) next.add(status)
+      return next
+    })
   const [map, setMap] = useState<ReactFlowInstance | null>(null)
   // Known land clears the fog: every node except the suggestions themselves.
   const known = useMemo(() => flow?.nodes.filter((n) => n.type !== 'fog').map((n) => n.position) ?? [], [flow])
@@ -88,6 +97,7 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
         </ViewportPortal>
         <Controls showInteractive={false} />
         <Panel position="top-left" className="map-toolbar">
+          <SkillSearch graph={graph.data} onSelect={setSelected} />
           <ImportButton />
           <ManageButton />
           <div className="lang-switch" role="group" aria-label={t('language')}>
@@ -99,13 +109,23 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
           </div>
           <details className="legend">
             <summary>{t('legend')}</summary>
+            <p className="legend__hint">{t('legend.filterHint')}</p>
             <ul>
               {STATUSES.map((status) => (
                 <li key={status}>
-                  <span className={`orb orb--${status.toLowerCase()}`} />
-                  {t(`legend.${status}`)}
+                  <button type="button" className="legend__filter" aria-pressed={statuses.has(status)} onClick={() => toggleStatus(status)}>
+                    <span className={`orb orb--${status.toLowerCase()}`} />
+                    {t(`legend.${status}`)}
+                  </button>
                 </li>
               ))}
+              {statuses.size > 0 && (
+                <li>
+                  <button type="button" className="legend__reset" onClick={() => setStatuses(new Set())}>
+                    {t('legend.showAll')}
+                  </button>
+                </li>
+              )}
               <li>
                 <span className="orb orb--fog" />
                 {t('legend.fog')}

@@ -1,5 +1,5 @@
 import { MarkerType, type Edge, type Node } from '@xyflow/react'
-import type { KnowledgeGraph, RelationType } from './api'
+import type { KnowledgeGraph, RelationType, SkillStatus } from './api'
 import { pick, type Lang } from './i18n'
 import { fogPositions, radialLayout } from './layout'
 import { RADIUS, type RuneEdge } from './skillMapParts'
@@ -19,9 +19,41 @@ const titleCase = (area: string) => area.replace(/-/g, ' ').replace(/\b\w/g, (c)
 
 export const FOG_PREFIX = 'fog:'
 
-export function toFlow(graph: KnowledgeGraph, selectedKey: string | null, lang: Lang): { nodes: Node[]; edges: Edge[] } {
+/**
+ * Which node ids stay bright; null = all of them. Presentation only (brief §32 focus, backlog status filter).
+ * Focus (a selected skill or suggestion): itself, its direct relations, its area hub, the suggestions growing from it.
+ * Status filter (empty = off): only skills with a chosen status. Both on: a node must pass both.
+ */
+function litIds(graph: KnowledgeGraph, selectedKey: string | null, statuses: ReadonlySet<SkillStatus>, hubOf: Map<string, string>) {
+  let lit: Set<string> | null = null
+  if (selectedKey) {
+    const key = selectedKey.startsWith(FOG_PREFIX) ? selectedKey.slice(FOG_PREFIX.length) : selectedKey
+    const source = graph.suggestions.find((s) => FOG_PREFIX + s.key === selectedKey)?.from
+    lit = new Set([selectedKey, hubOf.get(key) ?? '', source ?? ''])
+    for (const e of graph.edges) {
+      if (e.from === key) lit.add(e.to)
+      if (e.to === key) lit.add(e.from)
+    }
+    for (const s of graph.suggestions) if (s.from === key) lit.add(FOG_PREFIX + s.key)
+  }
+  if (statuses.size > 0) {
+    const byStatus = new Set(graph.nodes.filter((n) => statuses.has(n.status)).map((n) => n.key))
+    lit = lit ? new Set([...lit].filter((id) => byStatus.has(id) || id === selectedKey)) : byStatus
+  }
+  return lit
+}
+
+export function toFlow(
+  graph: KnowledgeGraph,
+  selectedKey: string | null,
+  lang: Lang,
+  statuses: ReadonlySet<SkillStatus> = new Set(),
+): { nodes: Node[]; edges: Edge[] } {
   const layout = radialLayout(graph.nodes)
   const { areas, positions } = layout
+  const hubOf = new Map(areas.flatMap((a) => a.members.map((m) => [m, a.hubSkillKey ?? `area:${a.name}`] as [string, string])))
+  const lit = litIds(graph, selectedKey, statuses, hubOf)
+  const dim = (id: string) => (lit && !lit.has(id) ? 'is-dim' : undefined)
   const hubKeys = new Set(areas.map((a) => a.hubSkillKey).filter(Boolean))
   const radiusOf = new Map<string, number>([['core', RADIUS.core]])
 
@@ -31,7 +63,7 @@ export function toFlow(graph: KnowledgeGraph, selectedKey: string | null, lang: 
     if (area.hubSkillKey) continue // the skill itself is the hub
     const id = `area:${area.name}`
     radiusOf.set(id, RADIUS.hub)
-    nodes.push({ id, type: 'area', position: area.hub, data: { name: titleCase(area.name) }, selectable: false })
+    nodes.push({ id, type: 'area', position: area.hub, data: { name: titleCase(area.name) }, selectable: false, className: dim(id) })
   }
 
   for (const skill of graph.nodes) {
@@ -43,6 +75,7 @@ export function toFlow(graph: KnowledgeGraph, selectedKey: string | null, lang: 
       position: positions.get(skill.key)!,
       data: { name: pick(lang, skill.name, skill.nameRu), status: skill.status, hub },
       selected: skill.key === selectedKey,
+      className: dim(skill.key),
     })
   }
 
@@ -50,15 +83,25 @@ export function toFlow(graph: KnowledgeGraph, selectedKey: string | null, lang: 
   for (const s of graph.suggestions) {
     const id = FOG_PREFIX + s.key
     radiusOf.set(id, RADIUS.skill)
-    nodes.push({ id, type: 'fog', position: fog.get(s.key)!, data: { name: pick(lang, s.name, s.nameRu) }, selected: id === selectedKey })
+    nodes.push({
+      id,
+      type: 'fog',
+      position: fog.get(s.key)!,
+      data: { name: pick(lang, s.name, s.nameRu) },
+      selected: id === selectedKey,
+      className: dim(id),
+    })
   }
 
+  // In focus only the lines touching the selected node stay bright; otherwise a line is bright when both ends are.
+  const edgeDim = (source: string, target: string) =>
+    lit && (selectedKey ? source !== selectedKey && target !== selectedKey : !lit.has(source) || !lit.has(target))
   const rune = (id: string, source: string, target: string, className: string, extra: Partial<RuneEdge> = {}): RuneEdge => ({
     id,
     source,
     target,
     type: 'rune',
-    className,
+    className: edgeDim(source, target) ? `${className} is-dim` : className,
     selectable: false,
     data: { sourceRadius: radiusOf.get(source)!, targetRadius: radiusOf.get(target)! },
     ...extra,

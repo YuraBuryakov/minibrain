@@ -220,7 +220,141 @@
   opacity: 0.85;
 }
 
+/* Focus / status filter: everything not lit fades back (never hidden). */
+.react-flow__node,
+.react-flow__edge {
+  transition: opacity 200ms ease-out;
+}
+
+.react-flow__node.is-dim {
+  opacity: 0.18;
+}
+
+.react-flow__edge.is-dim {
+  opacity: 0.08;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__node,
+  .react-flow__edge {
+    transition: none;
+  }
+}
+
+/* ---- search ---- */
+
+.search {
+  position: relative;
+}
+
+.search__input {
+  width: 240px;
+  padding: 9px 12px;
+  border: 1px solid var(--bronze-dim);
+  border-radius: 4px;
+  background: var(--night);
+  color: var(--bone);
+  font: inherit;
+  font-size: 17px;
+}
+
+.search__input::placeholder {
+  color: var(--bone-dim);
+}
+
+.search__input:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 2px;
+}
+
+.search__results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  width: 340px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--bronze-dim);
+  border-radius: 4px;
+  background: var(--night);
+  box-shadow: 0 8px 24px var(--abyss);
+}
+
+.search__result,
+.search__empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  color: var(--bone);
+}
+
+.search__result {
+  cursor: pointer;
+}
+
+.search__result--active {
+  background: var(--night-glow);
+}
+
+.search__result small {
+  margin-left: auto;
+  color: var(--bone-dim);
+  font-size: 13px;
+}
+
+.search__empty {
+  color: var(--bone-dim);
+}
+
+.search .orb {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-width: 1.5px;
+}
+
 /* ---- legend ---- */
+
+.legend__hint {
+  margin: 0 0 8px;
+  max-width: 260px;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+.legend__filter,
+.legend__reset {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 6px;
+  margin: 0 -6px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.legend__filter[aria-pressed='true'] {
+  border-color: var(--bronze);
+  background: var(--night-glow);
+}
+
+.legend__reset {
+  color: var(--bone-dim);
+  text-decoration: underline;
+}
+
+.legend__filter:focus-visible,
+.legend__reset:focus-visible {
+  outline: 2px solid var(--bone);
+}
 
 .legend {
   padding: 8px 14px;

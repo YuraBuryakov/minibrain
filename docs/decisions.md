@@ -301,3 +301,15 @@ Format: date · decision · reason · alternatives considered.
   topic that was actually taught as a `newSkills` entry with the same key. Creating a skill through the import
   deletes the open suggestion with that key. (A skill created by hand via `POST /api/skills` does not; no UI for it.)
 - No animated smoke.
+
+### 2026-09-29 · Step 17: search, focus mode, status filter
+
+- **Search is client-side** over the already loaded graph: English name, Russian name or key, case-insensitive,
+  suggestions included. No `SearchSkills` endpoint while the map has tens / hundreds of skills. Picking a result
+  equals clicking the node (select, center, card, focus). Esc in the search clears only the search.
+- **Focus is automatic on selection** (brief §32): bright = the selected node, its direct relations both ways, its
+  area hub, the suggestions growing from it; only lines touching it stay bright. Exit = Esc / click on the empty map.
+- **Status filter in the legend:** toggle one or more statuses, the rest is dimmed, never hidden. With focus on, a
+  node must pass both.
+- **One mechanism:** `litIds()` in the `toFlow` adapter returns the bright ids (or null = all); everything else gets
+  the `is-dim` class. Presentation only: no backend change, no revision.
