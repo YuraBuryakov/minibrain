@@ -40,3 +40,40 @@ export async function fetchAiContext(key: string, goal: string): Promise<unknown
   if (!response.ok) throw new Error(`GET context ${key} failed: ${response.status}`)
   return response.json()
 }
+
+// Mirrors dev.minibrain.importing.application.ImportPreview.
+export type ImportSection = 'NEW_SKILLS' | 'STATUS_CHANGES' | 'EVIDENCE' | 'OPEN_QUESTIONS' | 'RELATIONS' | 'SUGGESTED_SKILLS'
+export type ImportIssue = { code: string; severity: 'ERROR' | 'WARNING'; message: string }
+export type ImportItem = {
+  id: number
+  section: ImportSection
+  skill: string | null
+  label: string
+  verdict: 'READY' | 'ALREADY_PRESENT' | 'INVALID'
+  issues: ImportIssue[]
+  selected: boolean
+}
+export type ImportPreview = { topic: string | null; documentIssues: ImportIssue[]; items: ImportItem[] }
+
+export async function previewImport(text: string): Promise<ImportPreview> {
+  const response = await fetch('/api/imports/preview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    body: text,
+  })
+  if (!response.ok) throw new Error(`Preview failed: ${response.status}`)
+  return response.json()
+}
+
+export async function applyImport(text: string, selectedIds: number[]): Promise<{ applied: number; skipped: number }> {
+  const response = await fetch('/api/imports/apply', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, selectedIds }),
+  })
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null)
+    throw new Error(problem?.detail ?? `Apply failed: ${response.status}`)
+  }
+  return response.json()
+}

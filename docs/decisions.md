@@ -190,3 +190,13 @@ Format: date · decision · reason · alternatives considered.
   `Change` is a sealed interface so Apply can switch over all kinds exhaustively.
 - **Relations for the AI:** MINIBRAIN_CONTEXT gets `knownSkills` (key + name of every skill; not the graph);
   the session prompt requires every new skill to be linked and existing keys to be reused exactly.
+
+### 2026-09-28 · Steps 12-13: Import dialog and Apply
+
+- **Decision:** an **Import** button on the map opens a native `<dialog>`: paste text or pick a file → preview
+  grouped by section with checkboxes (only READY items can be ticked) → `POST /api/imports/apply {text, selectedIds}`.
+- **Apply is stateless:** the server re-runs the preview on the same text and applies only chosen items that are
+  still READY, in one `@Transactional` (all or nothing), skills first, relations last. A client never sends changes,
+  only ids. Re-applying the same text changes nothing (everything is ALREADY_PRESENT).
+- **Suggested skill ticked = unlocked** as a DISCOVERED skill (brief §14), with the reason as description.
+- `scripts/load-update.ps1` removed. No Revision yet (step 14).

@@ -19,8 +19,8 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 9 | AI Context export (`MINIBRAIN_CONTEXT`) | ✅ done |
 | 10 | `MINIBRAIN_UPDATE` parser (`POST /api/imports/preview`) | ✅ done |
 | 11 | Validation (per-item issues, brief §21 + orphan / redundant relation) | ✅ done |
-| 12 | Preview / Change Set | ⬜ |
-| 13 | Apply (then remove `scripts/load-update.ps1`) | ⬜ |
+| 12 | Preview / Change Set (Import dialog: paste or file, checkboxes) | ✅ done |
+| 13 | Apply (one transaction; temporary loader removed) | ✅ done |
 | 13b | Session notes as `LearningSession` + bilingual content (see Backlog) | ⬜ |
 | 14 | Revision | ⬜ |
 | 15 | `current.json` export | ⬜ |
@@ -45,5 +45,13 @@ Decided direction is noted; details still get discussed when a wish is picked up
   rule for this topic, because I explicitly asked for it.
 - **Session notes saved in MiniBrain.** The AI already writes bilingual (EN/RU) study notes before the JSON
   (session prompt, step 9). Store them: brief §50 module `learning` with `LearningSession` (topic, date, notes EN/RU,
-  touched skills), shown on the Skill card. Design it inside the import (steps 10-13), e.g. `session.notes: {en, ru}`.
+  touched skills). Import carries it as e.g. `session.notes: {en, ru}`.
+  **UI decided:** the Skill card stays as it is (not overloaded). It only gets a button that opens a centred
+  reading window (same native `<dialog>` as Import) with the session notes of that skill, EN/RU switchable.
+- **Pending verification questions carried over.** At the end of a session the AI asks short checks
+  (e.g. "Why is exposing the whole Payment aggregate worse than PaymentResult?"). Unanswered ones travel into
+  MiniBrain (e.g. `pendingChecks` in `MINIBRAIN_UPDATE`), are shown on the Skill card, and go into the next
+  MINIBRAIN_CONTEXT; the AI starts the next session with them, then explains and gives new material.
+  Answering them is what unlocks new things (ties into the gamification brainstorm).
+  Open: difference from Open Questions (a check tests me, a question is a gap), schema, what exactly gets unlocked.
 

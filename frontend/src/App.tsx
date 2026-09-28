@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Controls, Panel, ReactFlow, type ReactFlowInstance } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { fetchGraph, type SkillStatus } from './api'
+import { ImportButton } from './ImportDialog'
 import { SkillCard } from './SkillCard'
 import { edgeTypes, nodeTypes } from './skillMapParts'
 import './skillMap.css'
@@ -47,7 +48,6 @@ export default function App() {
 
   if (graph.isPending) return <p className="message">Loading the Skill Map…</p>
   if (graph.isError) return <p className="message">Could not load the Skill Map: {graph.error.message}. Is the backend running?</p>
-  if (graph.data.nodes.length === 0) return <p className="message">The map is empty. Import a MINIBRAIN_UPDATE file to add your first skills.</p>
 
   return (
     <div className={selected ? 'skill-map skill-map--with-card' : 'skill-map'}>
@@ -68,7 +68,8 @@ export default function App() {
         fitViewOptions={{ padding: 0.12 }}
       >
         <Controls showInteractive={false} />
-        <Panel position="top-left">
+        <Panel position="top-left" className="map-toolbar">
+          <ImportButton />
           <details className="legend">
             <summary>Legend</summary>
             <ul>

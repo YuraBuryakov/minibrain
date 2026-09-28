@@ -45,6 +45,14 @@ public class SkillRepository {
         return new Skill(keyHolder.getKey().longValue(), key, name, description, status, now, now);
     }
 
+    public void changeStatus(long id, SkillStatus status) {
+        jdbc.sql("UPDATE skill SET status = :status, updated_at = :now WHERE id = :id")
+                .param("status", status.name())
+                .param("now", TIMESTAMP.format(Instant.now()))
+                .param("id", id)
+                .update();
+    }
+
     public Optional<Skill> findByKey(String key) {
         return jdbc.sql("SELECT * FROM skill WHERE key = ?")
                 .param(key)

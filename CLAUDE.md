@@ -115,8 +115,8 @@ Rules of thumb:
 | "запусти" / "start" | `powershell -ExecutionPolicy Bypass -File dev.ps1 start` (backend + frontend, waits until ready, opens browser) |
 | "останови" / "stop" | `powershell -ExecutionPolicy Bypass -File dev.ps1 stop` (kills by port, whole process tree) |
 | "статус" / "status" | `powershell -ExecutionPolicy Bypass -File dev.ps1 status` |
-| "импортируй <file>" | app must be running; `powershell -ExecutionPolicy Bypass -File scripts/load-update.ps1 -File <file>` (temporary loader until steps 10-13) |
 
+Importing a `MINIBRAIN_UPDATE`: the **Import** button on the map (paste text or pick a file, preview, apply).
 AI prompt for building the initial map: `docs/ai/initial-map-prompt.md` (output is `MINIBRAIN_UPDATE` JSON).
 
 Logs: `logs/backend.log`, `logs/frontend.log`. `start` uses the real `data/minibrain.db`; for demos with fake
