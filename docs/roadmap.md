@@ -10,7 +10,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 1 | Flyway + first migration (`skill` table) + create one Skill | ✅ done |
 | 2 | Read Skill data back | ✅ done |
 | 3 | Evidence | ✅ done |
-| 4 | Open Questions | ⬜ |
+| 4 | Open Questions | ✅ done |
 | 5 | Relations | ⬜ |
 | 6 | Basic graph query | ⬜ |
 | 7 | Minimal React Skill Map (create `frontend/`) | ⬜ |

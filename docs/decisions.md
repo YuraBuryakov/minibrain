@@ -57,3 +57,12 @@ Format: date · decision · reason · alternatives considered.
   interface shape, so an interface guessed today would not survive. Callers already depend only on domain methods;
   extract the interface when a second (JPA) implementation actually appears.
 - **Alternative:** ports & adapters now (interface per repository). Rejected as speculative.
+
+### 2026-09-28 · Step 4: Open Questions
+
+- **Decision:** `open_question` table with nullable `resolved_at` (NULL = open); resolved questions are kept, not deleted.
+  API: `POST|GET /api/skills/{key}/open-questions`, `POST .../{id}/resolve` (idempotent, keeps first resolution time).
+- **Why:** the history of closed gaps is part of "how I become better".
+- **`UNIQUE (skill_id, text)`:** `MINIBRAIN_UPDATE` resolves questions by text, so duplicates within a Skill would be ambiguous.
+- **Not linked to Evidence on resolve:** Evidence is added via its own endpoint; the import Apply (step 13) will do both
+  in one transaction.
