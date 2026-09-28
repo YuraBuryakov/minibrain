@@ -31,6 +31,19 @@ class SkillRepositoryTests {
     }
 
     @Test
+    void readsBackWhatWasCreated() {
+        Skill created = skills.create("ddd.invariant", "Invariant", "Rule that must always hold", SkillStatus.UNDERSTOOD);
+
+        assertThat(skills.findByKey("ddd.invariant")).contains(created);
+        assertThat(skills.findAll()).contains(created);
+    }
+
+    @Test
+    void findByKeyReturnsEmptyForUnknownKey() {
+        assertThat(skills.findByKey("no.such-skill")).isEmpty();
+    }
+
+    @Test
     void rejectsDuplicateKey() {
         skills.create("messaging.outbox", "Outbox", null, SkillStatus.DISCOVERED);
 

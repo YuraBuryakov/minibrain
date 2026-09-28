@@ -35,3 +35,9 @@ Format: date · decision · reason · alternatives considered.
 - **Timestamps:** ISO-8601 UTC `TEXT`, fixed width `yyyy-MM-ddTHH:mm:ss.SSSZ`, so text order = time order
   (`Instant.toString()` is not fixed width).
 - **No service layer yet:** controller calls the repository directly; add one when real logic appears.
+
+### 2026-09-28 · Step 2: reading Skills
+
+- **Decision:** `GET /api/skills` (all, ordered by `key`) and `GET /api/skills/{key}` (404 if missing). One shared row mapper.
+- **Why:** API addresses Skills by stable `key`, never by numeric `id`. Ordering by `key` gives stable output.
+- **Deferred:** paging and filtering. Not needed while the map holds tens of Skills.

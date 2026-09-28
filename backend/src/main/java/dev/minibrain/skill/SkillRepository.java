@@ -4,10 +4,14 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class SkillRepository {
@@ -37,5 +41,29 @@ public class SkillRepository {
                 .param("now", TIMESTAMP.format(now))
                 .update(keyHolder);
         return new Skill(keyHolder.getKey().longValue(), key, name, description, status, now, now);
+    }
+
+    public Optional<Skill> findByKey(String key) {
+        return jdbc.sql("SELECT * FROM skill WHERE key = ?")
+                .param(key)
+                .query(SkillRepository::mapRow)
+                .optional();
+    }
+
+    public List<Skill> findAll() {
+        return jdbc.sql("SELECT * FROM skill ORDER BY key")
+                .query(SkillRepository::mapRow)
+                .list();
+    }
+
+    private static Skill mapRow(ResultSet rs, int rowNum) throws SQLException {
+        return new Skill(
+                rs.getLong("id"),
+                rs.getString("key"),
+                rs.getString("name"),
+                rs.getString("description"),
+                SkillStatus.valueOf(rs.getString("status")),
+                Instant.parse(rs.getString("created_at")),
+                Instant.parse(rs.getString("updated_at")));
     }
 }
