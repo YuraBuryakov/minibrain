@@ -15,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,5 +72,23 @@ class SuggestionControllerTests {
         // A dismissed suggestion is not offered again.
         assertThat(previewer.preview(UPDATE).items()).filteredOn(i -> "sug.meh".equals(i.skill()))
                 .extracting(Item::verdict).containsExactly(Verdict.ALREADY_PRESENT);
+    }
+
+    @Test
+    void aSuggestionLearnedAsANewSkillLeavesTheFog() {
+        String suggest = """
+                { "type": "MINIBRAIN_UPDATE", "schemaVersion": 2, "suggestedSkills": [ { "key": "sug.learned", "name": "Learned" } ] }
+                """;
+        String learn = """
+                { "type": "MINIBRAIN_UPDATE", "schemaVersion": 2,
+                  "newSkills": [ { "key": "sug.learned", "name": "Learned", "status": "LEARNING" } ] }
+                """;
+        for (String update : List.of(suggest, learn)) {
+            applier.apply(update, previewer.preview(update).items().stream().filter(Item::selected).map(Item::id).collect(Collectors.toSet()));
+        }
+
+        KnowledgeGraph after = graph.get();
+        assertThat(after.nodes()).extracting(KnowledgeGraph.Node::key).contains("sug.learned");
+        assertThat(after.suggestions()).extracting(KnowledgeGraph.Suggestion::key).doesNotContain("sug.learned");
     }
 }

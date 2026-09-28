@@ -26,6 +26,7 @@ public class AiContextQuery {
     }
 
     public Optional<AiContext> find(String key, String goal) {
+        KnowledgeGraph map = graph.get();
         return details.find(key).map(skill -> new AiContext(
                 AiContext.TYPE,
                 AiContext.SCHEMA_VERSION,
@@ -38,7 +39,8 @@ public class AiContextQuery {
                         .map(r -> new AiContext.RelatedSkill(r.key(), r.name(), r.status(), r.type(), r.outgoing() ? "outgoing" : "incoming"))
                         .toList(),
                 // ponytail: all skills; limit to the focus area once the map holds hundreds of skills.
-                graph.get().nodes().stream().map(n -> new AiContext.KnownSkill(n.key(), n.name())).toList(),
+                map.nodes().stream().map(n -> new AiContext.KnownSkill(n.key(), n.name())).toList(),
+                map.suggestions().stream().map(s -> new AiContext.KnownSkill(s.key(), s.name())).toList(),
                 goal == null || goal.isBlank() ? null : goal.strip()));
     }
 

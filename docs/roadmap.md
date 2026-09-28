@@ -27,7 +27,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 14 | Revision (module `revision`, history in Manage, initial state rebuilt) | ✅ done |
 | 15 | `current.json` export (download from Manage; snapshots / restore later) | ✅ done |
 | 16 | Suggested Skills / Fog (stored suggestions, `?` nodes, unlock / dismiss, fog of war beyond known land) | ✅ done |
-| 17 | Focus mode / search | ⬜ |
+| 17 | Focus mode / search (must have: find a skill by its name, EN or RU) | ⬜ |
 | 18 | Layout improvements (radial auto layout done early in 7b; left: AUTO/PINNED, drag, saved positions) | ⬜ |
 
 ## Backlog (my wishes, not scheduled yet)
@@ -63,3 +63,6 @@ Decided direction is noted; details still get discussed when a wish is picked up
 - **Ask the AI for a new branch.** I tell the AI what I would like to learn next (an idea, a new area of knowledge)
   and it proposes a whole new branch of the map, e.g. an `architecture` root with its first skills and relations.
   Probably arrives as suggestions (step 16 fog) under a new area; the AI chat would be the natural place to ask.
+- **All open questions in one place.** A questions section across all skills; clicking a question opens the Skill
+  card it belongs to. Important to tie into the game (answering questions = progress / unlocks), so design it
+  together with the gamification brainstorm.

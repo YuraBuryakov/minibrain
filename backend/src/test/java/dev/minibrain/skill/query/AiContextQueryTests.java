@@ -8,6 +8,8 @@ import dev.minibrain.skill.persistence.EvidenceRepository;
 import dev.minibrain.skill.persistence.OpenQuestionRepository;
 import dev.minibrain.skill.persistence.SkillRelationRepository;
 import dev.minibrain.skill.persistence.SkillRepository;
+import dev.minibrain.skill.persistence.SuggestedSkillRepository;
+import dev.minibrain.skill.domain.SuggestedSkill;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,6 +37,9 @@ class AiContextQueryTests {
     @Autowired
     ObjectMapper json;
 
+    @Autowired
+    SuggestedSkillRepository suggestions;
+
     @Test
     void selectsNewestEvidenceOpenQuestionsAndMostUsefulRelations() {
         Skill focus = skills.create("ctx.focus", "Focus", null, SkillStatus.LEARNING);
@@ -55,10 +60,12 @@ class AiContextQueryTests {
             relations.add(focus.id(), next.id(), RelationType.LEADS_TO);
         }
 
+        suggestions.add(new SuggestedSkill("ctx.fog", "Fog", null, null, null, "ctx.focus"));
+
         AiContext context = query.find("ctx.focus", null).orElseThrow();
 
         assertThat(context.type()).isEqualTo("MINIBRAIN_CONTEXT");
-        assertThat(context.schemaVersion()).isEqualTo(1);
+        assertThat(context.schemaVersion()).isEqualTo(2);
         assertThat(context.evidence()).containsExactly("Evidence 3", "Evidence 4", "Evidence 5", "Evidence 6", "Evidence 7");
         assertThat(context.openQuestions()).containsExactly("Open");
         assertThat(context.relatedSkills()).hasSize(7);
@@ -68,6 +75,8 @@ class AiContextQueryTests {
         assertThat(context.knownSkills()).contains(
                 new AiContext.KnownSkill("ctx.focus", "Focus"),
                 new AiContext.KnownSkill("ctx.dependant", "Dependant"));
+        assertThat(context.suggestedSkills()).contains(new AiContext.KnownSkill("ctx.fog", "Fog"));
+        assertThat(context.knownSkills()).extracting(AiContext.KnownSkill::key).doesNotContain("ctx.fog");
         assertThat(context.goal()).isNull();
     }
 

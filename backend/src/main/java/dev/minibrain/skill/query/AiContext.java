@@ -19,10 +19,11 @@ public record AiContext(
         List<String> openQuestions,
         List<RelatedSkill> relatedSkills,
         List<KnownSkill> knownSkills,
+        List<KnownSkill> suggestedSkills,
         String goal) {
 
     public static final String TYPE = "MINIBRAIN_CONTEXT";
-    public static final int SCHEMA_VERSION = 1;
+    public static final int SCHEMA_VERSION = 2; // 2: suggestedSkills
 
     public record Focus(String key, String name, SkillStatus status) {
     }
@@ -35,6 +36,7 @@ public record AiContext(
      * Every skill in MiniBrain, key + name only (not the graph: no evidence, no relations).
      * Lets the AI link new skills to existing ones and avoid duplicates. (Extension of the brief example.)
      */
+    /** Also used for {@code suggestedSkills}: topics already waiting in the fog, so the AI does not suggest them again. */
     public record KnownSkill(String key, String name) {
     }
 

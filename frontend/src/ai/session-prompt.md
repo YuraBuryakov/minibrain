@@ -94,6 +94,8 @@ Rules:
   A skill with no relation floats outside the map.
 - `suggestedSkills`: topics worth learning next, not learned yet (they wait in the fog until I unlock them).
   `from` is the skill each one grows from (usually the focus skill); `reason` is bilingual like the other texts.
+  Never suggest a key that is already in `knownSkills` or in the context's `suggestedSkills` (those already wait
+  in the fog). If this session actually taught one of them, put it into `newSkills` with the same key.
 - Use existing keys exactly as written in the context. Never invent a key for a skill that should already exist.
 - Relation types: `PART_OF`, `REQUIRES`, `RELATED_TO`, `LEADS_TO`. If `A REQUIRES B`, skip `A RELATED_TO B`.
   Do not repeat relations that the context already lists in `relatedSkills`.

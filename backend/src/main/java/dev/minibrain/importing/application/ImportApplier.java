@@ -119,7 +119,10 @@ public class ImportApplier {
     // Exhaustive switch over the sealed interface: a new Change kind will not compile until it is handled here.
     private void apply(Change change, Set<String> touched) {
         switch (change) {
-            case Change.CreateSkill c -> skills.create(c.key(), c.name(), c.nameRu(), c.description(), c.descriptionRu(), c.status());
+            case Change.CreateSkill c -> {
+                skills.create(c.key(), c.name(), c.nameRu(), c.description(), c.descriptionRu(), c.status());
+                suggestions.delete(c.key()); // a suggested topic that was learned right away leaves the fog
+            }
             case Change.SuggestSkill c -> suggestions.add(new SuggestedSkill(c.key(), c.name(), c.nameRu(), c.reason(), c.reasonRu(), c.from()));
             case Change.ChangeStatus c -> skills.changeStatus(id(c.skill()), c.to());
             case Change.AddEvidence c -> evidence.add(id(c.skill()), c.text(), c.textRu());

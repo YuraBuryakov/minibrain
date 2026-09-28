@@ -296,5 +296,8 @@ Format: date · decision · reason · alternatives considered.
   to it, and a suggestion card with Unlock / Hide. Fog of war is presentation only: an SVG sheet in flow
   coordinates with a hole = convex hull of all known nodes, widened and blurred. No fog between areas, only
   beyond the outermost skills, so suggestions sitting outside look hidden in it.
-- **Not done:** suggestions are not sent in MINIBRAIN_CONTEXT yet (the AI may suggest an existing suggestion again;
-  the import then marks it ALREADY_PRESENT). No animated smoke.
+- **Context knows the fog (follow-up):** MINIBRAIN_CONTEXT v2 lists open suggestions in `suggestedSkills`
+  (key + name, separate from `knownSkills`); the session prompt forbids suggesting them again and says to return a
+  topic that was actually taught as a `newSkills` entry with the same key. Creating a skill through the import
+  deletes the open suggestion with that key. (A skill created by hand via `POST /api/skills` does not; no UI for it.)
+- No animated smoke.
