@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import translatePrompt from './ai/translate-prompt.md?raw'
-import { fetchCurrentState, fetchMissingTranslations, type TranslationRequest } from './api'
+import { fetchCurrentState, fetchMissingTranslations, resetPositions, type TranslationRequest } from './api'
 import { useT } from './i18n'
 import { HistorySection } from './HistorySection'
 import { ImportBody } from './ImportDialog'
@@ -63,6 +63,8 @@ function ManageBody({ onClose }: { onClose: () => void }) {
   // Importing the AI answer happens inside this window; the list refreshes afterwards (Import invalidates queries).
   const [importing, setImporting] = useState(false)
   const [exportStatus, setExportStatus] = useState<string | null>(null)
+  const [layoutStatus, setLayoutStatus] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
   async function copy(skill?: string) {
     try {
@@ -76,6 +78,16 @@ function ManageBody({ onClose }: { onClose: () => void }) {
 
   function download() {
     saveFile(forAi(missing.data!), `minibrain-translation-${today()}.md`, 'text/markdown;charset=utf-8')
+  }
+
+  async function resetLayout() {
+    try {
+      await resetPositions()
+      await queryClient.invalidateQueries({ queryKey: ['positions'] })
+      setLayoutStatus(t('manage.layoutDone'))
+    } catch (e) {
+      setLayoutStatus(e instanceof Error ? e.message : String(e))
+    }
   }
 
   async function exportCurrent() {
@@ -153,6 +165,17 @@ function ManageBody({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         {exportStatus && <p className="import__error">{exportStatus}</p>}
+      </section>
+
+      <section className="manage__section">
+        <h3>{t('manage.layout')}</h3>
+        <p className="import__hint">{t('manage.layoutHint')}</p>
+        <div className="import__actions">
+          <button type="button" className="import__secondary" onClick={resetLayout}>
+            {t('manage.layoutReset')}
+          </button>
+        </div>
+        {layoutStatus && <p className="card__hint" role="status">{layoutStatus}</p>}
       </section>
 
       <HistorySection />

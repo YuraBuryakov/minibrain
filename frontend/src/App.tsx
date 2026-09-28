@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { Controls, Panel, ReactFlow, ViewportPortal, type ReactFlowInstance } from '@xyflow/react'
+import { Controls, Panel, ReactFlow, ViewportPortal, type Node, type NodeChange, type NodeDimensionChange, type ReactFlowInstance } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { fetchGraph, type RelationType, type SkillStatus } from './api'
+import { fetchGraph, fetchPositions, pinPosition, type NodePosition, type RelationType, type SkillStatus } from './api'
 import { initialLang, LangContext, pick, saveLang, useT, type Lang } from './i18n'
 import { ImportButton } from './ImportDialog'
 import { ManageButton } from './ManageDialog'
@@ -37,7 +37,16 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
   const [selected, setSelected] = useState<string | null>(null)
   // Status filter in the legend: empty = all statuses. Dims the others, never hides them.
   const [statuses, setStatuses] = useState<ReadonlySet<SkillStatus>>(new Set())
-  const flow = useMemo(() => (graph.data ? toFlow(graph.data, selected, lang, statuses) : null), [graph.data, selected, lang, statuses])
+  // Pinned positions (brief §30). While dragging, the cache is updated live; on drop the position is saved.
+  const queryClient = useQueryClient()
+  const positions = useQuery({ queryKey: ['positions'], queryFn: fetchPositions })
+  const pins = useMemo(() => new Map((positions.data ?? []).map((p) => [p.id, { x: p.x, y: p.y }])), [positions.data])
+  const movePin = (pin: NodePosition) =>
+    queryClient.setQueryData<NodePosition[]>(['positions'], (old = []) => [...old.filter((p) => p.id !== pin.id), pin])
+  const flow = useMemo(
+    () => (graph.data ? toFlow(graph.data, selected, lang, statuses, pins) : null),
+    [graph.data, selected, lang, statuses, pins],
+  )
   const toggleStatus = (status: SkillStatus) =>
     setStatuses((current) => {
       const next = new Set(current)
@@ -45,6 +54,16 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
       return next
     })
   const [map, setMap] = useState<ReactFlowInstance | null>(null)
+  // React Flow keeps measured sizes on its node objects; toFlow rebuilds them on every drag step, which would drop
+  // them ("node is not initialized", a jumpy cursor). So the sizes React Flow reports are kept and put back.
+  const [measured, setMeasured] = useState<ReadonlyMap<string, Node['measured']>>(new Map())
+  const nodes = useMemo(() => flow?.nodes.map((n) => ({ ...n, measured: measured.get(n.id) })) ?? [], [flow, measured])
+  const onNodesChange = (changes: NodeChange[]) => {
+    const sizes = changes.filter((c): c is NodeDimensionChange => c.type === 'dimensions' && c.dimensions !== undefined)
+    if (sizes.length) setMeasured((current) => new Map([...current, ...sizes.map((c) => [c.id, c.dimensions] as const)]))
+    // Drag steps go into the pin cache, so a dragged hub carries its area along live.
+    for (const c of changes) if (c.type === 'position' && c.position) movePin({ id: c.id, ...c.position })
+  }
   // Known land clears the fog: every node except the suggestions themselves.
   const known = useMemo(() => flow?.nodes.filter((n) => n.type !== 'fog').map((n) => n.position) ?? [], [flow])
 
@@ -77,7 +96,7 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
   return (
     <div className={selected ? 'skill-map skill-map--with-card' : 'skill-map'}>
       <ReactFlow
-        nodes={flow!.nodes}
+        nodes={nodes}
         edges={flow!.edges}
         onNodeClick={(_, node) => (node.type === 'skill' || node.type === 'fog') && setSelected(node.id)}
         onPaneClick={() => setSelected(null)}
@@ -86,7 +105,11 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
         edgeTypes={edgeTypes}
         nodeOrigin={[0.5, 0.5]}
         colorMode="dark"
-        nodesDraggable={false}
+        onNodesChange={onNodesChange}
+        onNodeDragStop={(_, node) => {
+          const pin = queryClient.getQueryData<NodePosition[]>(['positions'])?.find((p) => p.id === node.id)
+          if (pin) pinPosition(pin).catch(() => queryClient.invalidateQueries({ queryKey: ['positions'] }))
+        }}
         nodesConnectable={false}
         minZoom={0.2}
         fitView

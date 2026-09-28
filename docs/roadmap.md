@@ -28,7 +28,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 15 | `current.json` export (download from Manage; snapshots / restore later) | ✅ done |
 | 16 | Suggested Skills / Fog (stored suggestions, `?` nodes, unlock / dismiss, fog of war beyond known land) | ✅ done |
 | 17 | Focus mode / search (search by EN/RU name or key, automatic focus, status filter in the legend) | ✅ done |
-| 18 | Layout improvements (radial auto layout done early in 7b; left: AUTO/PINNED, drag, saved positions) | ⬜ |
+| 18 | Hybrid layout: drag to pin (saved in DB), a hub carries its area, reset in Manage | ✅ done |
 
 ## Backlog (my wishes, not scheduled yet)
 

@@ -1,7 +1,7 @@
 import { MarkerType, type Edge, type Node } from '@xyflow/react'
 import type { KnowledgeGraph, RelationType, SkillStatus } from './api'
 import { pick, type Lang } from './i18n'
-import { fogPositions, radialLayout } from './layout'
+import { applyPins, fogPositions, hubIdOf, radialLayout, type Point } from './layout'
 import { RADIUS, type RuneEdge } from './skillMapParts'
 
 // The only place where React Flow types meet our graph (brief §31: frontend adapts, backend stays generic).
@@ -48,22 +48,24 @@ export function toFlow(
   selectedKey: string | null,
   lang: Lang,
   statuses: ReadonlySet<SkillStatus> = new Set(),
+  pins: ReadonlyMap<string, Point> = new Map(),
 ): { nodes: Node[]; edges: Edge[] } {
-  const layout = radialLayout(graph.nodes)
+  const layout = applyPins(radialLayout(graph.nodes), pins)
   const { areas, positions } = layout
-  const hubOf = new Map(areas.flatMap((a) => a.members.map((m) => [m, a.hubSkillKey ?? `area:${a.name}`] as [string, string])))
+  const hubOf = new Map(areas.flatMap((a) => a.members.map((m) => [m, hubIdOf(a)] as [string, string])))
   const lit = litIds(graph, selectedKey, statuses, hubOf)
   const dim = (id: string) => (lit && !lit.has(id) ? 'is-dim' : undefined)
   const hubKeys = new Set(areas.map((a) => a.hubSkillKey).filter(Boolean))
   const radiusOf = new Map<string, number>([['core', RADIUS.core]])
 
-  const nodes: Node[] = [{ id: 'core', type: 'core', position: { x: 0, y: 0 }, data: {}, selectable: false }]
+  // Skills and area sigils can be dragged (pinned); the core and suggestions cannot.
+  const nodes: Node[] = [{ id: 'core', type: 'core', position: { x: 0, y: 0 }, data: {}, selectable: false, draggable: false }]
 
   for (const area of areas) {
     if (area.hubSkillKey) continue // the skill itself is the hub
     const id = `area:${area.name}`
     radiusOf.set(id, RADIUS.hub)
-    nodes.push({ id, type: 'area', position: area.hub, data: { name: titleCase(area.name) }, selectable: false, className: dim(id) })
+    nodes.push({ id, type: 'area', position: area.hub, data: { name: titleCase(area.name) }, selectable: false, draggable: true, className: dim(id) })
   }
 
   for (const skill of graph.nodes) {
@@ -75,6 +77,7 @@ export function toFlow(
       position: positions.get(skill.key)!,
       data: { name: pick(lang, skill.name, skill.nameRu), status: skill.status, hub },
       selected: skill.key === selectedKey,
+      draggable: true,
       className: dim(skill.key),
     })
   }
@@ -89,6 +92,7 @@ export function toFlow(
       position: fog.get(s.key)!,
       data: { name: pick(lang, s.name, s.nameRu) },
       selected: id === selectedKey,
+      draggable: false,
       className: dim(id),
     })
   }
@@ -111,7 +115,7 @@ export function toFlow(
   const partOf = new Set(graph.edges.filter((e) => e.type === 'PART_OF').map((e) => `${e.from}>${e.to}`))
   const edges: Edge[] = []
   for (const area of areas) {
-    const hubId = area.hubSkillKey ?? `area:${area.name}`
+    const hubId = hubIdOf(area)
     edges.push(rune(`root:${hubId}`, 'core', hubId, 'edge-root'))
     for (const member of area.members) {
       if (!partOf.has(`${member}>${hubId}`)) edges.push(rune(`branch:${member}`, hubId, member, 'edge-branch'))

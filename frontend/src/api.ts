@@ -15,6 +15,29 @@ export async function fetchGraph(): Promise<KnowledgeGraph> {
   return response.json()
 }
 
+// Pinned map positions (backend NodePositionController). id: a skill key or "area:<name>".
+export type NodePosition = { id: string; x: number; y: number }
+
+export async function fetchPositions(): Promise<NodePosition[]> {
+  const response = await fetch('/api/layout/positions')
+  if (!response.ok) throw new Error(`GET positions failed: ${response.status}`)
+  return response.json()
+}
+
+export async function pinPosition({ id, x, y }: NodePosition): Promise<void> {
+  const response = await fetch(`/api/layout/positions/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ x, y }),
+  })
+  if (!response.ok) throw new Error(`Saving the position of ${id} failed: ${response.status}`)
+}
+
+export async function resetPositions(): Promise<void> {
+  const response = await fetch('/api/layout/positions', { method: 'DELETE' })
+  if (!response.ok) throw new Error(`Reset layout failed: ${response.status}`)
+}
+
 export async function unlockSuggestion(key: string): Promise<void> {
   const response = await fetch(`/api/suggestions/${encodeURIComponent(key)}/unlock`, { method: 'POST' })
   if (!response.ok) throw new Error(`Unlock ${key} failed: ${response.status}`)

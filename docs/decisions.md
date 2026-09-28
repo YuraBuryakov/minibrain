@@ -313,3 +313,16 @@ Format: date · decision · reason · alternatives considered.
   node must pass both.
 - **One mechanism:** `litIds()` in the `toFlow` adapter returns the bright ids (or null = all); everything else gets
   the `is-dim` class. Presentation only: no backend change, no revision.
+
+### 2026-09-29 · Step 18: hybrid layout (AUTO / PINNED)
+
+- **Storage:** table `node_position(node_id, x, y)` (V9), `GET` / `PUT /{id}` / `DELETE /api/layout/positions`.
+  `node_id` = skill key or `area:<name>` (sigil); no foreign key, a pin of a vanished node is unused. A separate
+  resource, not part of `/api/graph` (brief §31); layout is not knowledge: no revision, not in current.json.
+- **Model:** the radial layout stays AUTO; `applyPins()` (pure, `layout.ts`) puts pinned nodes on top. A pinned hub
+  carries its unpinned skills along (the whole area moves); a pinned skill stays where it was put. Suggestions and
+  the core cannot be dragged; suggestions follow their source.
+- **Drag:** React Flow reports drag steps through `onNodesChange`; each step updates the positions query cache (the
+  area moves live), the drop saves it. React Flow's measured node sizes are kept and merged back into the rebuilt
+  nodes: without them it treats the dragged node as uninitialized (warning #015) and the cursor jumps.
+- **Reset:** Manage → "Map layout" → back to automatic. Not done: unpin a single node, auto-arrange a cluster.

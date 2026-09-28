@@ -3,13 +3,16 @@ import type { GraphNode, GraphSuggestion } from './api'
 // Radial skill-tree layout (Path of Exile style), pure: graph nodes in, coordinates out.
 // Areas come from the key prefix ("ddd.aggregate" -> "ddd") and sit on a ring around the centre;
 // the skills of an area fan outwards from the area hub. A skill whose key equals the area ("ddd") is the hub.
-// ponytail: deterministic, no saved positions; hybrid AUTO/PINNED positions arrive in step 18.
+// Hybrid layout (brief §30): this radial layout is AUTO; applyPins() puts PINNED nodes where I dragged them.
 
 export type Point = { x: number; y: number }
 export type Area = { name: string; hub: Point; hubSkillKey?: string; members: string[] }
 export type RadialLayout = { areas: Area[]; positions: Map<string, Point> }
 
 export const areaOf = (key: string) => key.split('.')[0]
+
+/** The map node of an area's hub: its own hub skill, or the presentation-only sigil. */
+export const hubIdOf = (area: Area) => area.hubSkillKey ?? `area:${area.name}`
 
 const AREA_RING_MIN = 400 // distance from the centre to an area hub
 const AREA_RING_PER_AREA = 64
@@ -49,6 +52,26 @@ export function radialLayout(nodes: GraphNode[]): RadialLayout {
     return { name, hub, hubSkillKey: hubSkill?.key, members: leaves.map((l) => l.key) }
   })
 
+  return { areas, positions }
+}
+
+/**
+ * PINNED positions over the AUTO layout. A pinned hub carries its unpinned skills along (the whole area moves);
+ * a pinned skill stays where it was put.
+ */
+export function applyPins(layout: RadialLayout, pins: ReadonlyMap<string, Point>): RadialLayout {
+  if (pins.size === 0) return layout
+  const positions = new Map(layout.positions)
+  const areas = layout.areas.map((area) => {
+    const hub = pins.get(hubIdOf(area)) ?? area.hub
+    const [dx, dy] = [hub.x - area.hub.x, hub.y - area.hub.y]
+    if (area.hubSkillKey) positions.set(area.hubSkillKey, hub)
+    for (const member of area.members) {
+      const auto = layout.positions.get(member)!
+      positions.set(member, pins.get(member) ?? { x: auto.x + dx, y: auto.y + dy })
+    }
+    return { ...area, hub }
+  })
   return { areas, positions }
 }
 
