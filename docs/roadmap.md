@@ -14,6 +14,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 5 | Relations | ✅ done |
 | 6 | Basic graph query | ✅ done |
 | 7 | Minimal React Skill Map (create `frontend/`) | ✅ done |
+| 7b | Game-like look: radial area clusters + dark fantasy style | ✅ done |
 | 8 | Select node + Skill card | ⬜ |
 | 9 | AI Context export (`MINIBRAIN_CONTEXT`) | ⬜ |
 | 10 | `MINIBRAIN_UPDATE` parser | ⬜ |
@@ -24,4 +25,4 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 15 | `current.json` export | ⬜ |
 | 16 | Suggested Skills / Fog concept | ⬜ |
 | 17 | Focus mode / search | ⬜ |
-| 18 | Layout improvements | ⬜ |
+| 18 | Layout improvements (radial auto layout done early in 7b; left: AUTO/PINNED, drag, saved positions) | ⬜ |

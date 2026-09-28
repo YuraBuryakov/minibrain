@@ -1,12 +1,43 @@
+/* Dark fantasy palette ("abyss and embers"). The app is dark by design; there is no light theme. */
+:root {
+  --abyss: #08060d;
+  --night: #151021;
+  --night-glow: #231a33;
+  --ash: #2b2433;
+  --ash-light: #4a4055;
+  --ash-rim: #5b5064;
+  --bone: #d9ccb0;
+  --bone-dim: #9a8f7d;
+  --bone-faint: rgba(217, 204, 176, 0.35);
+  --bone-glow: rgba(217, 204, 176, 0.25);
+  --parchment: #efe0bd;
+  --bronze: #a0773f;
+  --bronze-dim: #5e4a33;
+  --bronze-glow: rgba(160, 119, 63, 0.35);
+  --ember: #d9772f;
+  --ember-glow: rgba(217, 119, 47, 0.45);
+  --moon: #a9c1e6;
+  --moon-glow: rgba(169, 193, 230, 0.45);
+  --verdigris: #63b596;
+  --verdigris-glow: rgba(99, 181, 150, 0.5);
+  --gilded: #e8bd55;
+  --gilded-glow: rgba(232, 189, 85, 0.6);
+
+  color-scheme: dark;
+}
+
 /* React Flow needs a parent with an explicit size: the map fills the whole window. */
 html,
 body,
 #root {
   height: 100%;
   margin: 0;
-  font-family: system-ui, sans-serif;
+  background: var(--abyss);
+  color: var(--bone);
+  font-family: 'Cormorant Garamond', Georgia, serif;
 }
 
 .message {
-  padding: 1rem;
+  padding: 1.5rem;
+  font-size: 18px;
 }

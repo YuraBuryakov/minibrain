@@ -1,0 +1,253 @@
+/* Dark fantasy skill tree. The one loud element is the glow of the orbs; everything else stays quiet. */
+
+.skill-map {
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at center, var(--night-glow) 0%, var(--night) 45%, var(--abyss) 100%);
+}
+
+.skill-map .react-flow {
+  /* React Flow's dark mode paints its own flat background over the gradient. */
+  --xy-background-color: transparent;
+}
+
+.skill-map .react-flow__renderer {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+/* Edges attach at the centre of every node; the handles themselves are invisible. */
+.centre-handle.react-flow__handle {
+  top: 50%;
+  left: 50%;
+  bottom: auto;
+  width: 1px;
+  height: 1px;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+}
+
+/* ---- orbs ---- */
+
+.orb {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--ash-rim);
+  background: radial-gradient(circle at 35% 30%, var(--ash-light), var(--ash) 70%);
+  transition: box-shadow 160ms ease-out;
+}
+
+.orb--hub {
+  width: 52px;
+  height: 52px;
+  border-width: 3px;
+}
+
+.orb--discovered {
+  opacity: 0.55;
+}
+
+.orb--learning {
+  border-color: var(--ember);
+  background: radial-gradient(circle at 35% 30%, #6b3a1f, #2a1710 75%);
+  box-shadow: 0 0 10px 1px var(--ember-glow);
+}
+
+.orb--understood {
+  border-color: var(--moon);
+  background: radial-gradient(circle at 35% 30%, #56647d, #1c2130 75%);
+  box-shadow: 0 0 14px 2px var(--moon-glow);
+}
+
+.orb--applied {
+  border-color: var(--verdigris);
+  background: radial-gradient(circle at 35% 30%, #3f8a70, #13281f 75%);
+  box-shadow: 0 0 18px 3px var(--verdigris-glow);
+}
+
+.orb--mastered {
+  border-color: var(--gilded);
+  background: radial-gradient(circle at 35% 30%, #f6dc8f, #8a6420 75%);
+  box-shadow: 0 0 26px 6px var(--gilded-glow), inset 0 0 6px rgba(255, 240, 200, 0.5);
+}
+
+.react-flow__node:hover .orb,
+.react-flow__node.selected .orb {
+  box-shadow: 0 0 0 3px var(--bone-faint), 0 0 22px 4px var(--bone-glow);
+}
+
+.react-flow__node:focus-visible {
+  outline: none;
+}
+
+.react-flow__node:focus-visible .orb {
+  box-shadow: 0 0 0 3px var(--bone);
+}
+
+/* Label hangs under the orb without changing the node box (the node is centred on its orb). */
+.orb__label {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--bone);
+  text-shadow: 0 1px 3px var(--abyss);
+  pointer-events: none;
+}
+
+.orb--discovered .orb__label {
+  color: var(--bone-dim);
+}
+
+.orb__label--area {
+  width: 180px;
+  font-family: 'IM Fell English SC', Georgia, serif;
+  font-weight: 400;
+  font-size: 24px;
+  color: var(--parchment);
+}
+
+/* Area without its own hub skill: an engraved ring, not a skill. */
+.sigil {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--bronze);
+  box-shadow: inset 0 0 0 5px var(--night), inset 0 0 0 6px var(--bronze-dim);
+  background: var(--night);
+}
+
+/* The centre of the tree. */
+.core {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid var(--bronze);
+  background: radial-gradient(circle, var(--parchment) 0%, var(--bronze) 30%, var(--night) 70%);
+  box-shadow: 0 0 40px 8px var(--bronze-glow);
+}
+
+/* ---- edges ---- */
+
+.skill-map .react-flow__edge-path {
+  stroke-width: 1.5;
+}
+
+.edge-root .react-flow__edge-path {
+  stroke: var(--bronze-dim);
+  stroke-width: 3;
+}
+
+.edge-branch .react-flow__edge-path,
+.edge-part-of .react-flow__edge-path {
+  stroke: var(--bronze-dim);
+  stroke-width: 2;
+}
+
+.edge-requires .react-flow__edge-path {
+  stroke: var(--ember);
+  stroke-opacity: 0.8;
+}
+
+.edge-related-to .react-flow__edge-path {
+  stroke: var(--moon);
+  stroke-opacity: 0.55;
+  stroke-dasharray: 2 5;
+}
+
+.edge-leads-to .react-flow__edge-path {
+  stroke: var(--gilded);
+  stroke-opacity: 0.75;
+  stroke-dasharray: 8 5;
+}
+
+/* ---- legend ---- */
+
+.legend {
+  padding: 8px 14px;
+  border: 1px solid var(--bronze-dim);
+  border-radius: 4px;
+  background: rgba(12, 9, 18, 0.85);
+  color: var(--bone);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 14px;
+}
+
+.legend summary {
+  cursor: pointer;
+  font-family: 'IM Fell English SC', Georgia, serif;
+  font-weight: 400;
+  font-size: 18px;
+  color: var(--parchment);
+}
+
+.legend summary:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 2px;
+}
+
+.legend[open] summary {
+  margin-bottom: 8px;
+}
+
+.legend ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend .orb {
+  width: 14px;
+  height: 14px;
+  border-width: 1.5px;
+  flex: none;
+}
+
+.legend__line {
+  width: 26px;
+  flex: none;
+  border-top: 2px solid;
+}
+
+.legend__line--requires {
+  border-color: var(--ember);
+}
+
+.legend__line--related-to {
+  border-color: var(--moon);
+  border-top-style: dotted;
+}
+
+.legend__line--leads-to {
+  border-color: var(--gilded);
+  border-top-style: dashed;
+}
+
+.legend__line--part-of {
+  border-color: var(--bronze-dim);
+}
+
+@media (max-width: 640px) {
+  .legend {
+    font-size: 13px;
+  }
+}

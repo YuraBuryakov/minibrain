@@ -116,3 +116,25 @@ Format: date · decision · reason · alternatives considered.
   Edges pointing to a lower-status column curve around nodes; real hybrid AUTO/PINNED layout is step 18.
 - **TanStack Query now, not later:** listed in the brief and needed from step 8 (Skill card, refetch after changes).
 - **No frontend tests yet:** the build (`tsc -b`) typechecks the adapter; add Vitest when frontend logic grows.
+
+### 2026-09-28 · Initial map via AI prompt + temporary loader
+
+- **Decision:** `docs/ai/initial-map-prompt.md` makes an AI interview me and output the brief's `MINIBRAIN_UPDATE`
+  format unchanged (skills in `newSkills`, their evidence/questions in `changes`, `newRelations`).
+  `scripts/load-update.ps1` loads it through the existing REST API.
+- **Why:** reusing the real format means the step 10-13 import will accept the same files; the loader needs no
+  backend changes and does not pull steps 10-13 forward.
+- **Loader limits (ponytail):** validates the whole file before writing, but has no preview, no Revision, is not
+  atomic, drops `reason`, and rejects `proposedStatus` / `openQuestionsResolved`. Deleted when step 13 lands.
+
+### 2026-09-28 · Step 7b: radial skill tree, dark fantasy style
+
+- **Decision:** radial layout (Path of Exile style): core in the centre, areas on a ring, skills fan outwards from
+  their area hub. Area = key prefix (`ddd.aggregate` → `ddd`); a skill whose key equals the area is the hub,
+  otherwise the frontend draws an area sigil. Core, sigils and branch lines are presentation-only.
+- **Why:** status columns split topics apart; areas already exist in the keys, so no backend or domain change.
+- **Style:** dark "abyss and embers" palette, status shown as the glow of an orb (the one loud element),
+  relations styled by type, labels hidden on edges. Fonts self-hosted via `@fontsource` (local-first, no CDN).
+- **Code:** `layout.ts` (pure positions), `skillMapParts.tsx` (custom nodes / trimmed straight edge),
+  `toFlow.ts` (adapter), `skillMap.css`. Legend is a native `<details>`.
+- **Left for step 18:** drag, AUTO/PINNED, saved positions. React Flow attribution stays visible (license).

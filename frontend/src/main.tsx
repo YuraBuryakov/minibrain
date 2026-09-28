@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import '@fontsource/cormorant-garamond/600.css'
+import '@fontsource/im-fell-english-sc'
 import './index.css'
 import App from './App.tsx'
 

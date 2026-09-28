@@ -110,6 +110,9 @@ Rules of thumb:
 | "запусти" / "start" | `powershell -ExecutionPolicy Bypass -File dev.ps1 start` (backend + frontend, waits until ready, opens browser) |
 | "останови" / "stop" | `powershell -ExecutionPolicy Bypass -File dev.ps1 stop` (kills by port, whole process tree) |
 | "статус" / "status" | `powershell -ExecutionPolicy Bypass -File dev.ps1 status` |
+| "импортируй <file>" | app must be running; `powershell -ExecutionPolicy Bypass -File scripts/load-update.ps1 -File <file>` (temporary loader until steps 10-13) |
+
+AI prompt for building the initial map: `docs/ai/initial-map-prompt.md` (output is `MINIBRAIN_UPDATE` JSON).
 
 Logs: `logs/backend.log`, `logs/frontend.log`. `start` uses the real `data/minibrain.db`; for demos with fake
 data Claude uses a scratch DB via `MINIBRAIN_DB_URL`, never the real one.
@@ -127,5 +130,6 @@ npm run dev              # http://localhost:5173, /api is proxied to :8080
 npm run build            # typecheck + production build
 ```
 
-Frontend layout: `src/api.ts` mirrors backend read models (fetch + types); `src/toFlow.ts` is the only
-place where React Flow types appear.
+Frontend layout: `src/api.ts` mirrors backend read models (fetch + types); `src/layout.ts` computes positions
+(pure, no React Flow); React Flow appears only in `src/toFlow.ts` (adapter) and `src/skillMapParts.tsx`
+(custom nodes / edges). Styles: palette tokens in `src/index.css`, map styles in `src/skillMap.css`.
