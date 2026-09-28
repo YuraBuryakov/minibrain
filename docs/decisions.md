@@ -150,3 +150,11 @@ Format: date · decision · reason · alternatives considered.
   links; the selected skill is panned into view left of the card (instant with reduced motion).
   Selection state is a `useState` in `App`, no state library.
 - **Not included:** editing (knowledge changes go through imports), focus mode (step 17), skill in the URL.
+
+### 2026-09-28 · Backlog direction (from my wishes)
+
+- **Bilingual EN/RU** covers knowledge content too; the AI writes both languages into `MINIBRAIN_UPDATE`.
+- **Status filter dims** non-matching skills instead of hiding them.
+- **"Needs review" uses the brief's `active` flag**, no new concept.
+- **Gamification** (progression, levels, growth charts) is wanted: brainstorm before any design or code.
+  The "no XP / achievements" hard rule no longer applies to this topic.

@@ -26,3 +26,19 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 16 | Suggested Skills / Fog concept | ⬜ |
 | 17 | Focus mode / search | ⬜ |
 | 18 | Layout improvements (radial auto layout done early in 7b; left: AUTO/PINNED, drag, saved positions) | ⬜ |
+
+## Backlog (my wishes, not scheduled yet)
+
+Decided direction is noted; details still get discussed when a wish is picked up.
+
+- **English and Russian, for UI and knowledge.** Interface texts in both languages with a switch.
+  Knowledge content too (skill names, descriptions, evidence, questions): the AI prepares it in both
+  languages in `MINIBRAIN_UPDATE`. Open: schema shape (e.g. `name: {en, ru}`), schemaVersion bump, migration.
+- **Status filter on the canvas: dim, never hide.** Skills not matching the selected status(es) are dimmed;
+  relations stay readable. Related: step 17 (focus mode).
+- **"Needs review" = the brief's `active` flag (§15).** A button on the Skill card marks a skill I want to
+  revisit because I no longer remember it well. Manual mark, not spaced-repetition scheduling.
+  Open: button wording, how the map shows it (brief suggests subtle pulsing). Per brief: no Revision.
+- **Make it a game, not a second Obsidian.** What I can do with new knowledge, levels / progression,
+  charts of growth over time. Needs a brainstorm first. This lifts the CLAUDE.md "no XP / achievements"
+  rule for this topic, because I explicitly asked for it.
