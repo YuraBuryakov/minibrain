@@ -18,7 +18,7 @@ Loop for every step:
 
 ```text
 task → discuss options → understand trade-offs → Claude writes a small piece
-→ I review and understand it → I run it → I commit → next task
+→ I review and understand it → I run it → Claude commits → next task
 ```
 
 For every task Claude:
@@ -28,7 +28,7 @@ For every task Claude:
 3. Proposes the simplest implementation.
 4. Writes only the code required for this slice.
 5. Briefly explains unfamiliar concepts.
-6. Stops when the slice is done and waits for my review/commit.
+6. Stops when the slice is done and waits for my review; after my OK Claude commits.
 7. At the end of a step updates `docs/roadmap.md`, `docs/decisions.md` and the project `status.md`.
 
 Hard rules:
@@ -38,7 +38,7 @@ Hard rules:
   If one simple class solves it, do not create five interfaces.
 - No microservices, auth, Docker, Event Sourcing, CQRS frameworks, command buses,
   XP/achievements, spaced repetition — unless I explicitly ask.
-- Claude does not run `git commit` — commits are mine.
+- Claude runs `git commit` after I have reviewed and approved the slice. Work happens on a branch (`feat-<topic>`), not directly on `main`.
 
 ## Project layout
 

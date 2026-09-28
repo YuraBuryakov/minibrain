@@ -21,3 +21,8 @@ Format: date · decision · reason · alternatives considered.
 - **Decision:** not added in the skeleton.
 - **Why:** "if a feature is not needed for the first useful workflow, do not build it yet".
   Flyway arrives with the first table (step 1), Modulith with the second module, frontend at step 7.
+
+### 2026-09-28 · Claude commits
+
+- **Decision:** Claude runs `git commit` after I review and approve a slice; work goes on `feat-<topic>` branches, merged into `main`.
+- **Why:** less manual routine; review stays mine, the approval gate is unchanged.
