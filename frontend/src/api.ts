@@ -64,6 +64,23 @@ export async function fetchGame(): Promise<GameState> {
   return response.json()
 }
 
+// Mirrors dev.minibrain.game.query.Quest: an open question seen as a quest. *Ru: null = use English.
+export type Quest = {
+  area: string
+  skillKey: string
+  skillName: string
+  skillNameRu: string | null
+  question: string
+  questionRu: string | null
+  xp: number
+}
+
+export async function fetchQuests(): Promise<Quest[]> {
+  const response = await fetch('/api/quests')
+  if (!response.ok) throw new Error(`GET /api/quests failed: ${response.status}`)
+  return response.json()
+}
+
 // Mirrors dev.minibrain.skill.query.SkillDetails (the Skill card). *Ru: optional Russian version (null = use English).
 export type SkillDetails = {
   key: string

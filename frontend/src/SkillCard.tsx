@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useState } from 'react'
-import sessionPrompt from './ai/session-prompt.md?raw'
-import { fetchAiContext, fetchSkillDetails, type SkillDetails } from './api'
+import { copyAiSession } from './aiSession'
+import { fetchSkillDetails, type SkillDetails } from './api'
 import { LangContext, pick, useT } from './i18n'
 import { SessionNotesButton } from './SessionNotesButton'
 
@@ -105,7 +105,7 @@ function CardBody({ skill, onSelect }: { skill: SkillDetails; onSelect: (key: st
   )
 }
 
-// Copies the session instructions + MINIBRAIN_CONTEXT as one text, ready to paste into an AI chat.
+// Copies the AI session for this skill (instructions + MINIBRAIN_CONTEXT), with an optional goal.
 function StudyWithAi({ skillKey }: { skillKey: string }) {
   const t = useT()
   const [goal, setGoal] = useState('')
@@ -113,10 +113,7 @@ function StudyWithAi({ skillKey }: { skillKey: string }) {
 
   async function copy() {
     try {
-      const context = await fetchAiContext(skillKey, goal)
-      const fence = '```'
-      const text = `${sessionPrompt.trimEnd()}\n\n${fence}json\n${JSON.stringify(context, null, 2)}\n${fence}\n`
-      await navigator.clipboard.writeText(text)
+      await copyAiSession(skillKey, goal)
       setState('copied')
     } catch {
       setState('failed')

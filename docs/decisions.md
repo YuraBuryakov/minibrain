@@ -356,3 +356,17 @@ Format: date · decision · reason · alternatives considered.
   margin; fog topics sit 120 px out, so below level 3 they show only "?" (no name in the node, the card or search).
   The vision gate is UI-only; the server checks points.
 - A skill the AI creates in `newSkills` stays free (SKILL_CREATED).
+
+### 2026-09-29 · Game G3: quests
+
+- **Quests are the open questions, nothing stored:** `game/query/QuestsQuery` (one SQL over `open_question JOIN
+  skill`, `resolved_at IS NULL`) serves `GET /api/quests`; area via `GameRules.areaOf`, reward `QUESTION_XP` sent by
+  the backend so +8 lives in one place. Chosen over putting questions into `/api/game` (fetched on every badge refresh)
+  and over N calls of skill details.
+- **Order:** SQL sorts by skill key and question id; a stable sort by area in Java keeps that order inside an area
+  (the area rule stays in Java, not repeated in SQL).
+- **Take quest** copies the AI session with the goal = the question in English (the context is English-first) and
+  selects the skill. The clipboard text is built by `frontend/src/aiSession.ts` (`copyAiSession`), shared with the
+  Skill card. A quest is finished only by an AI session (`openQuestionsResolved`), never by a button.
+- **Next idea recorded (G3b, owner):** mastery gate, a fog topic unlocks only when its source skill is UNDERSTOOD+,
+  on top of the talent point (design §6).

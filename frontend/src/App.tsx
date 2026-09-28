@@ -7,6 +7,7 @@ import { initialLang, LangContext, pick, saveLang, useT, type Lang } from './i18
 import { HeroBadge } from './HeroBadge'
 import { ImportButton } from './ImportDialog'
 import { ManageButton } from './ManageDialog'
+import { QuestsButton } from './QuestsDialog'
 import { SkillCard } from './SkillCard'
 import { SkillSearch } from './SkillSearch'
 import { SuggestionCard } from './SuggestionCard'
@@ -131,6 +132,7 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
         <Controls showInteractive={false} />
         <Panel position="top-left" className="map-toolbar">
           <SkillSearch graph={graph.data} hideFog={fogHidden} onSelect={setSelected} />
+          <QuestsButton graph={graph.data} onSelect={setSelected} />
           <ImportButton />
           <ManageButton />
           <div className="lang-switch" role="group" aria-label={t('language')}>

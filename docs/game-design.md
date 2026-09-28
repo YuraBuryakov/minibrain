@@ -74,6 +74,11 @@ Per skill, from its state at a given moment:
   gets a label for the new type. SQLite cannot alter a CHECK constraint, so a migration rebuilds `revision_change` (create new table,
   copy, drop, rename). Unlocks made before that stay recorded as SKILL_CREATED and cost nothing.
 - The unlock endpoint moves to the game module (it checks points); the unlock itself stays a `skill` service.
+- **Mastery gate (G3b, owner's idea 2026-09-29):** a topic can be unlocked only when its source skill is UNDERSTOOD
+  or higher: finish a branch before opening the next one. The gate comes on top of the talent point (level = overall
+  growth, gate = depth in one branch). A suggestion without a source skill (or with a source that no longer exists)
+  has no gate, only the point. The server checks it (HTTP 409); the Unlock button is disabled and names the skill
+  and the status to reach.
 
 ## 7. Vision (fog grows back with level)
 
@@ -196,6 +201,7 @@ Frontend:
 | G1 | Module `game`: rules, replay, `GET /api/game`; hero badge; area ranks under hubs |
 | G2 | `SKILL_UNLOCKED` migration; unlock costs a point; vision and hidden names in the fog |
 | G3 | Quests window + Take quest |
+| G3b | Mastery gate: unlock only when the source skill is UNDERSTOOD+ (§6) |
 | G4 | Constellations on the map, achievements, journal, chart, hero window |
 | G5 | AI teaches by rank: context v3, context assembly moves to `learning` |
 | later | Pathfinder points / new branch, bosses (with the AI chat) |
