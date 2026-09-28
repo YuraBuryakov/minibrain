@@ -26,3 +26,12 @@ Format: date · decision · reason · alternatives considered.
 
 - **Decision:** Claude runs `git commit` after I review and approve a slice; work goes on `feat-<topic>` branches, merged into `main`.
 - **Why:** less manual routine; review stays mine, the approval gate is unchanged.
+
+### 2026-09-28 · Step 1: `skill` table conventions
+
+- **Flyway:** only `flyway-core` (11.7.2, managed by Spring Boot); SQLite support is built in.
+- **Status:** `TEXT` + `CHECK (status IN (...))`. The DB rejects bad values even if written outside Java.
+- **id:** `INTEGER PRIMARY KEY AUTOINCREMENT`. Stable external identity is `key`, so UUID adds nothing.
+- **Timestamps:** ISO-8601 UTC `TEXT`, fixed width `yyyy-MM-ddTHH:mm:ss.SSSZ`, so text order = time order
+  (`Instant.toString()` is not fixed width).
+- **No service layer yet:** controller calls the repository directly; add one when real logic appears.

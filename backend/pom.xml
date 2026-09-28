@@ -42,9 +42,14 @@
             <version>${sqlite-jdbc.version}</version>
         </dependency>
 
+        <!-- Schema migrations. SQLite support is built into flyway-core (no extra module) -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+
         <!--
             Intentionally NOT added yet (see docs/roadmap.md):
-            - Flyway          -> Step 1, together with the first table (skill)
             - Spring Modulith -> when the second module appears
         -->
 
