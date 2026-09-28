@@ -34,3 +34,6 @@ Thumbs.db
 
 # dev.ps1 logs
 logs/
+
+# Stray logs written by test runs with a mangled Windows path
+*scratchpad*
