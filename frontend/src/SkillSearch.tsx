@@ -10,7 +10,8 @@ const MAX_RESULTS = 8
 
 type Match = { id: string; label: string; key: string; status: string }
 
-export function SkillSearch({ graph, onSelect }: { graph: KnowledgeGraph; onSelect: (id: string) => void }) {
+// hideFog: fog topics beyond the character's vision (game) must not leak their names through search.
+export function SkillSearch({ graph, hideFog, onSelect }: { graph: KnowledgeGraph; hideFog: boolean; onSelect: (id: string) => void }) {
   const t = useT()
   const lang = useContext(LangContext)
   const [query, setQuery] = useState('')
@@ -24,7 +25,7 @@ export function SkillSearch({ graph, onSelect }: { graph: KnowledgeGraph; onSele
           .filter((n) => hits([n.name, n.nameRu, n.key]))
           .map((n) => ({ id: n.key, label: pick(lang, n.name, n.nameRu), key: n.key, status: n.status.toLowerCase() })),
         ...graph.suggestions
-          .filter((s) => hits([s.name, s.nameRu, s.key]))
+          .filter((s) => !hideFog && hits([s.name, s.nameRu, s.key]))
           .map((s) => ({ id: FOG_PREFIX + s.key, label: pick(lang, s.name, s.nameRu), key: s.key, status: 'fog' })),
       ].slice(0, MAX_RESULTS)
     : []

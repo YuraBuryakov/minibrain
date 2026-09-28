@@ -47,6 +47,9 @@ const en = {
   'fog.hint': 'Unlock it to put it on the map as a new skill, or hide the suggestion.',
   'fog.unlock': 'Unlock',
   'fog.dismiss': 'Hide',
+  'fog.hidden': 'Too far in the fog to make out. Grow a level to see further.',
+  'fog.unlockCost': 'Unlock (1 talent point)',
+  'fog.noPoints': 'No talent points. The next one comes with the next level.',
   'relation.REQUIRES': 'Requires',
   'relation.LEADS_TO': 'Leads to',
   'relation.RELATED_TO': 'Related to',
@@ -136,6 +139,7 @@ const en = {
   'history.RELATION_ADDED': 'Relation',
   'history.TRANSLATION_ADDED': 'Translation',
   'history.NOTES_SAVED': 'Study notes',
+  'history.SKILL_UNLOCKED': 'Unlocked from the fog',
 }
 
 type Key = keyof typeof en
@@ -182,6 +186,9 @@ const ru: Record<Key, string> = {
   'fog.hint': 'Открой, чтобы он появился на карте новым навыком, или скрой предложение.',
   'fog.unlock': 'Открыть',
   'fog.dismiss': 'Скрыть',
+  'fog.hidden': 'Слишком далеко в тумане. Подними уровень, чтобы видеть дальше.',
+  'fog.unlockCost': 'Открыть (1 очко таланта)',
+  'fog.noPoints': 'Нет очков таланта. Следующее даст новый уровень.',
   'relation.REQUIRES': 'Требует',
   'relation.LEADS_TO': 'Ведёт к',
   'relation.RELATED_TO': 'Связано с',
@@ -271,6 +278,7 @@ const ru: Record<Key, string> = {
   'history.RELATION_ADDED': 'Связь',
   'history.TRANSLATION_ADDED': 'Перевод',
   'history.NOTES_SAVED': 'Конспект',
+  'history.SKILL_UNLOCKED': 'Открыт из тумана',
 }
 
 const dictionaries: Record<Lang, Record<Key, string>> = { en, ru }

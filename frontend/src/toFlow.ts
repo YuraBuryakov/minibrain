@@ -1,7 +1,7 @@
 import { MarkerType, type Edge, type Node } from '@xyflow/react'
 import type { KnowledgeGraph, RelationType, SkillStatus } from './api'
 import { pick, type Lang } from './i18n'
-import { applyPins, fogPositions, hubIdOf, radialLayout, type Point } from './layout'
+import { applyPins, FOG_DISTANCE, fogPositions, hubIdOf, radialLayout, type Point } from './layout'
 import { RADIUS, type RuneEdge } from './skillMapParts'
 
 // The only place where React Flow types meet our graph (brief §31: frontend adapts, backend stays generic).
@@ -49,10 +49,12 @@ export type FlowView = {
   statuses?: ReadonlySet<SkillStatus>
   pins?: ReadonlyMap<string, Point>
   ranks?: ReadonlyMap<string, number> // area key -> rank (game)
+  vision?: number // clear fog margin in px (game); fog topics further out than this stay nameless
 }
 
 export function toFlow(graph: KnowledgeGraph, view: FlowView): { nodes: Node[]; edges: Edge[] } {
   const { selectedKey, lang, statuses = new Set<SkillStatus>(), pins = new Map<string, Point>(), ranks = new Map<string, number>() } = view
+  const fogHidden = (view.vision ?? Infinity) < FOG_DISTANCE
   const layout = applyPins(radialLayout(graph.nodes), pins)
   const { areas, positions } = layout
   const hubOf = new Map(areas.flatMap((a) => a.members.map((m) => [m, hubIdOf(a)] as [string, string])))
@@ -93,7 +95,7 @@ export function toFlow(graph: KnowledgeGraph, view: FlowView): { nodes: Node[]; 
       id,
       type: 'fog',
       position: fog.get(s.key)!,
-      data: { name: pick(lang, s.name, s.nameRu) },
+      data: { name: pick(lang, s.name, s.nameRu), hidden: fogHidden },
       selected: id === selectedKey,
       draggable: false,
       className: dim(id),

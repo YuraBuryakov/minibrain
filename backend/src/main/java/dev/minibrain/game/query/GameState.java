@@ -10,8 +10,12 @@ import java.util.List;
  */
 public record GameState(Player player, List<Area> areas) {
 
-    /** {@code levelStartXp} / {@code nextLevelXp}: XP where the current and the next level start (the XP bar). */
-    public record Player(int xp, int level, int levelStartXp, int nextLevelXp, GameRules.Title title, int talentPoints) {
+    /**
+     * {@code levelStartXp} / {@code nextLevelXp}: XP where the current and the next level start (the XP bar).
+     * {@code talentPoints}: left to spend; {@code vision}: clear fog margin in px.
+     */
+    public record Player(int xp, int level, int levelStartXp, int nextLevelXp, GameRules.Title title, int talentPoints,
+                         int vision) {
     }
 
     /** {@code rank} = the area's level on the same curve. */

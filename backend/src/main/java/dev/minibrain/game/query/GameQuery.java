@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import static dev.minibrain.game.domain.GameRules.levelFor;
 import static dev.minibrain.game.domain.GameRules.titleFor;
+import static dev.minibrain.game.domain.GameRules.vision;
 import static dev.minibrain.game.domain.GameRules.xpForLevel;
 
 /**
@@ -32,7 +33,9 @@ public class GameQuery {
 
         int xp = replay.totalXp();
         int level = levelFor(xp);
-        var player = new GameState.Player(xp, level, xpForLevel(level), xpForLevel(level + 1), titleFor(level), level - 1);
+        int talentPoints = Math.max(0, level - 1 - replay.unlocks()); // a lost level may leave spent points "owed"
+        var player = new GameState.Player(xp, level, xpForLevel(level), xpForLevel(level + 1), titleFor(level),
+                talentPoints, vision(level));
         var areas = replay.areaXp().entrySet().stream()
                 .map(e -> new GameState.Area(e.getKey(), e.getValue(), levelFor(e.getValue())))
                 .toList();

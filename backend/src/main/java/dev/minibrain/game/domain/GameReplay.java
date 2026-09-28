@@ -26,11 +26,13 @@ public final class GameReplay {
     }
 
     private final Map<String, Progress> skills = new HashMap<>();
+    private int unlocks;
 
     public void apply(Event e) {
         if (e.skillKey() == null) return;
+        if ("SKILL_UNLOCKED".equals(e.type())) unlocks++;
         switch (e.type()) {
-            case "SKILL_CREATED", "SKILL_STATUS_CHANGED" -> {
+            case "SKILL_CREATED", "SKILL_STATUS_CHANGED", "SKILL_UNLOCKED" -> {
                 if (e.toStatus() != null) progress(e.skillKey()).status = e.toStatus();
             }
             case "EVIDENCE_ADDED" -> progress(e.skillKey()).evidence++;
@@ -38,6 +40,11 @@ public final class GameReplay {
             default -> { // relations, translations, notes, added questions: no XP
             }
         }
+    }
+
+    /** Talent points spent so far. */
+    public int unlocks() {
+        return unlocks;
     }
 
     public int totalXp() {

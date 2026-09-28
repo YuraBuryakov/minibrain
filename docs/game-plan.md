@@ -699,3 +699,313 @@ module `game`, computed from revisions, rules in `GameRules`). Stop for the owne
 git add backend/src/main/java/dev/minibrain/game backend/src/test/java/dev/minibrain/game frontend/src docs
 git commit -m "Game G1: XP, levels, titles and area ranks computed from revisions; hero badge; ranks under hubs"
 ```
+
+---
+
+# Game layer G2 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Unlocking a topic from the fog costs a talent point, and the fog hides topics beyond the character's vision.
+
+**Architecture:** Migration V10 rebuilds `revision_change` so its CHECK allows `SKILL_UNLOCKED`. The unlock use case
+moves from `SuggestionController` into `skill/application/SuggestionUnlocker` (records `SKILL_UNLOCKED` +
+`RELATION_ADDED`). `GameController` gets `POST /api/game/unlock/{key}`: it checks talent points, then calls the
+unlocker. `GameReplay` counts unlocks; `GameState.Player` gains `vision`. The frontend uses `vision` as the fog margin
+and hides names of fog topics beyond it.
+
+**Spec:** [`docs/game-design.md`](game-design.md) §6-7.
+
+## Global Constraints
+
+- Everything from the G1 constraints above still applies.
+- Talent points = `max(0, (level - 1) - unlocks)`; unlock without a point -> HTTP 409.
+- Vision = `min(200, 60 + 30 * (level - 1))` px; fog nodes sit `FOG_DISTANCE` = 120 px from their anchor, so a topic
+  is readable when `vision >= 120` (level 3+). The vision gate is UI-only.
+- A skill the AI creates in `newSkills` stays free (still `SKILL_CREATED`).
+- Back up `data/minibrain.db` into `backups/` before V10 runs against it.
+
+## File structure
+
+| File | Change |
+|---|---|
+| `backend/src/main/resources/db/migration/V10__add_skill_unlocked.sql` | Rebuild `revision_change` with the new CHECK |
+| `backend/src/main/java/dev/minibrain/revision/domain/RevisionChange.java` | `SKILL_UNLOCKED` + `skillUnlocked(...)` |
+| `backend/src/main/java/dev/minibrain/skill/application/SuggestionUnlocker.java` | New: the unlock use case |
+| `backend/src/main/java/dev/minibrain/skill/web/SuggestionController.java` | Loses `/unlock` (dismiss stays) |
+| `backend/src/main/java/dev/minibrain/game/domain/GameRules.java` | `vision(level)` |
+| `backend/src/main/java/dev/minibrain/game/domain/GameReplay.java` | `SKILL_UNLOCKED` + `unlocks()` |
+| `backend/src/main/java/dev/minibrain/game/query/GameState.java`, `GameQuery.java` | `vision`, points after spending |
+| `backend/src/main/java/dev/minibrain/game/web/GameController.java` | `POST /api/game/unlock/{key}` |
+| tests | `GameRulesTests`, `SuggestionControllerTests` (moved unlock), new `GameUnlockTests` (409) |
+| `frontend/src/api.ts`, `SuggestionCard.tsx`, `layout.ts`, `toFlow.ts`, `skillMapParts.tsx`, `App.tsx`, `SkillSearch.tsx`, `i18n.ts` | Cost, disabled state, vision |
+
+---
+
+### Task 1: `SKILL_UNLOCKED` in the history (migration + domain)
+
+**Files:**
+- Create: `backend/src/main/resources/db/migration/V10__add_skill_unlocked.sql`
+- Modify: `backend/src/main/java/dev/minibrain/revision/domain/RevisionChange.java`
+
+**Interfaces:**
+- Produces: `RevisionChange.Type.SKILL_UNLOCKED`, `RevisionChange.skillUnlocked(String key, String status, String name)`.
+
+- [ ] **Step 1: Migration**
+
+```sql
+-- Game G2: SKILL_UNLOCKED = a skill opened from the fog with a talent point. SQLite cannot change a CHECK
+-- constraint, so the table is rebuilt: new table, copy every row (ids kept), drop, rename, indexes again.
+CREATE TABLE revision_change_new (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    revision_id   INTEGER NOT NULL REFERENCES revision (id),
+    type          TEXT    NOT NULL CHECK (type IN ('SKILL_CREATED', 'SKILL_STATUS_CHANGED', 'EVIDENCE_ADDED',
+                          'QUESTION_ADDED', 'QUESTION_RESOLVED', 'RELATION_ADDED', 'TRANSLATION_ADDED', 'NOTES_SAVED',
+                          'SKILL_UNLOCKED')),
+    skill_key     TEXT,
+    from_status   TEXT,
+    to_status     TEXT,
+    text          TEXT,
+    related_key   TEXT,
+    relation_type TEXT,
+    occurred_at   TEXT    NOT NULL
+);
+
+INSERT INTO revision_change_new (id, revision_id, type, skill_key, from_status, to_status, text, related_key,
+                                 relation_type, occurred_at)
+SELECT id, revision_id, type, skill_key, from_status, to_status, text, related_key, relation_type, occurred_at
+FROM revision_change;
+
+DROP TABLE revision_change;
+ALTER TABLE revision_change_new RENAME TO revision_change;
+
+CREATE INDEX revision_change_revision_id ON revision_change (revision_id);
+CREATE INDEX revision_change_skill_key ON revision_change (skill_key);
+```
+
+- [ ] **Step 2: `RevisionChange`**: add `SKILL_UNLOCKED` to the `Type` enum (last) and the factory:
+
+```java
+    /** A skill opened from the fog with a talent point (game). Carries the same fields as skillCreated. */
+    public static RevisionChange skillUnlocked(String key, String status, String name) {
+        return new RevisionChange(Type.SKILL_UNLOCKED, key, null, status, name, null, null, Instant.now());
+    }
+```
+
+### Task 2: Unlock use case moves to `skill/application`, the game charges a point
+
+**Files:**
+- Create: `backend/src/main/java/dev/minibrain/skill/application/SuggestionUnlocker.java`
+- Modify: `backend/src/main/java/dev/minibrain/skill/web/SuggestionController.java` (remove `unlock`, keep `dismiss`)
+- Modify: `GameRules.java`, `GameReplay.java`, `GameState.java`, `GameQuery.java`, `GameController.java`
+- Test: `GameRulesTests.java`, `SuggestionControllerTests.java`, new `backend/src/test/java/dev/minibrain/game/web/GameUnlockTests.java`
+
+**Interfaces:**
+- Produces: `SuggestionUnlocker.unlock(String key): Optional<Skill>` (empty = no open suggestion);
+  `GameRules.vision(int level): int`; `GameReplay.unlocks(): int`; `GameState.Player(..., int talentPoints, int vision)`;
+  `POST /api/game/unlock/{key}` -> 201 skill / 404 no suggestion / 409 no talent point / 409 key taken.
+
+- [ ] **Step 1: Tests first**
+
+`GameRulesTests`, add:
+```java
+    @Test
+    void visionGrowsThirtyPerLevelUpTo200() {
+        assertThat(GameRules.vision(1)).isEqualTo(60);
+        assertThat(GameRules.vision(3)).isEqualTo(120);
+        assertThat(GameRules.vision(6)).isEqualTo(200);
+        assertThat(GameRules.vision(12)).isEqualTo(200);
+    }
+
+    @Test
+    void anUnlockCreatesTheSkillAndIsCounted() {
+        var replay = new GameReplay();
+        replay.apply(new Event("SKILL_UNLOCKED", "ddd.value-object", "DISCOVERED"));
+        replay.apply(new Event("SKILL_STATUS_CHANGED", "ddd.value-object", "LEARNING"));
+        assertThat(replay.unlocks()).isEqualTo(1);
+        assertThat(replay.totalXp()).isEqualTo(10);
+    }
+```
+`SuggestionControllerTests`: the update gets enough XP for points (a MASTERED skill = 100 XP = level 3 alone), and
+unlock moves to the game endpoint:
+```java
+              "newSkills": [ { "key": "sug.base", "name": "Base", "status": "LEARNING" },
+                             { "key": "sug.xp", "name": "Xp", "status": "MASTERED" } ],
+```
+```java
+        mvc.perform(post("/api/game/unlock/sug.next")).andExpect(status().isCreated());
+        // ...
+        mvc.perform(post("/api/game/unlock/sug.meh")).andExpect(status().isNotFound());
+```
+and the revision check becomes "SKILL_UNLOCKED + RELATION_ADDED":
+```java
+        assertThat(revisions.findRecent(1).getFirst().changes()).extracting(RevisionChange::type)
+                .containsExactly(RevisionChange.Type.SKILL_UNLOCKED, RevisionChange.Type.RELATION_ADDED);
+```
+New `GameUnlockTests` (own context with a mocked `GameQuery`, so the point balance is known):
+```java
+package dev.minibrain.game.web;
+
+import dev.minibrain.game.domain.GameRules;
+import dev.minibrain.game.query.GameQuery;
+import dev.minibrain.game.query.GameState;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
+
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest(properties = "spring.datasource.url=jdbc:sqlite::memory:")
+@AutoConfigureMockMvc
+class GameUnlockTests {
+
+    @MockitoBean
+    GameQuery game;
+
+    @Autowired
+    MockMvc mvc;
+
+    @Test
+    void unlockingWithoutATalentPointIsRefused() throws Exception {
+        when(game.get()).thenReturn(new GameState(
+                new GameState.Player(0, 1, 0, 25, GameRules.Title.STUDENT, 0, 60), List.of()));
+
+        mvc.perform(post("/api/game/unlock/any.topic")).andExpect(status().isConflict());
+    }
+}
+```
+
+- [ ] **Step 2: `SuggestionUnlocker`** (logic moved from `SuggestionController.unlock`)
+
+```java
+package dev.minibrain.skill.application;
+
+import dev.minibrain.revision.domain.RevisionChange;
+import dev.minibrain.revision.persistence.RevisionRepository;
+import dev.minibrain.revision.persistence.RevisionRepository.Source;
+import dev.minibrain.skill.domain.RelationType;
+import dev.minibrain.skill.domain.Skill;
+import dev.minibrain.skill.domain.SkillStatus;
+import dev.minibrain.skill.persistence.SkillRelationRepository;
+import dev.minibrain.skill.persistence.SkillRepository;
+import dev.minibrain.skill.persistence.SuggestedSkillRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Unlock (brief §14): an open suggestion becomes a DISCOVERED skill (its reason becomes the description) and, when
+ * its source exists, "source LEADS_TO new skill". History: SKILL_UNLOCKED (+ RELATION_ADDED). Who may unlock (talent
+ * points) is the game's decision, not this service's. A skill with the same key -> DuplicateKeyException (409).
+ */
+@Service
+public class SuggestionUnlocker {
+
+    private final SuggestedSkillRepository suggestions;
+    private final SkillRepository skills;
+    private final SkillRelationRepository relations;
+    private final RevisionRepository revisions;
+
+    public SuggestionUnlocker(SuggestedSkillRepository suggestions, SkillRepository skills,
+                              SkillRelationRepository relations, RevisionRepository revisions) {
+        this.suggestions = suggestions;
+        this.skills = skills;
+        this.relations = relations;
+        this.revisions = revisions;
+    }
+
+    /** Empty when there is no open suggestion with this key. */
+    @Transactional
+    public Optional<Skill> unlock(String key) {
+        return suggestions.findOpen(key).map(s -> {
+            Skill skill = skills.create(s.key(), s.name(), s.nameRu(), s.reason(), s.reasonRu(), SkillStatus.DISCOVERED);
+            List<RevisionChange> history = new ArrayList<>(List.of(RevisionChange.skillUnlocked(key, SkillStatus.DISCOVERED.name(), s.name())));
+            if (s.sourceSkill() != null) {
+                skills.findByKey(s.sourceSkill()).ifPresent(source -> {
+                    relations.add(source.id(), skill.id(), RelationType.LEADS_TO);
+                    history.add(RevisionChange.relationAdded(source.key(), RelationType.LEADS_TO.name(), key));
+                });
+            }
+            suggestions.delete(key);
+            revisions.record(Source.MANUAL, null, history);
+            return skill;
+        });
+    }
+}
+```
+`SuggestionController`: delete the `unlock` method and the fields / imports only it used; update its class comment
+to "Dismissing suggested skills; unlocking costs a talent point and lives in the game module".
+
+- [ ] **Step 3: Game rules, replay, state, query, controller**
+
+`GameRules`:
+```java
+    /** Clear margin (px) around known land in the fog: 60 at level 1, +30 per level, at most 200 (spec §7). */
+    public static int vision(int level) {
+        return Math.min(200, 60 + 30 * (level - 1));
+    }
+```
+`GameReplay`: `SKILL_UNLOCKED` joins the `SKILL_CREATED` / `SKILL_STATUS_CHANGED` case, is counted in a field
+`unlocks`, exposed as `public int unlocks()` ("talent points spent so far").
+`GameState.Player` gains `int vision` as the last component (clear fog margin in px).
+`GameQuery`: talent points `Math.max(0, level - 1 - replay.unlocks())`, and `vision(level)` as the last argument.
+`GameController` (constructor gains `SuggestionUnlocker unlocker`):
+```java
+    /** Spends a talent point to open a topic from the fog (spec §6). */
+    @PostMapping("/api/game/unlock/{key}")
+    @Transactional
+    @ResponseStatus(HttpStatus.CREATED)
+    public Skill unlock(@PathVariable String key) {
+        if (game.get().player().talentPoints() < 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "no talent point: reach the next level");
+        }
+        return unlocker.unlock(key)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "no open suggestion: " + key));
+    }
+```
+
+- [ ] **Step 4: Run the backend suite** (via `test-runner`): `cd backend && mvn -q test`, all PASS.
+
+### Task 3: Frontend: cost, disabled unlock, vision
+
+**Files:** `frontend/src/api.ts`, `layout.ts`, `toFlow.ts`, `skillMapParts.tsx`, `App.tsx`, `SkillSearch.tsx`,
+`SuggestionCard.tsx`, `i18n.ts`.
+
+- [ ] **Step 1: `api.ts`**: `player` gains `vision: number`; unlock goes to the game endpoint, 409 becomes a known error:
+```ts
+export async function unlockSuggestion(key: string): Promise<void> {
+  const response = await fetch(`/api/game/unlock/${encodeURIComponent(key)}`, { method: 'POST' })
+  if (response.status === 409) throw new Error('409')
+  if (!response.ok) throw new Error(`Unlock ${key} failed: ${response.status}`)
+}
+```
+- [ ] **Step 2: `layout.ts`**: export `FOG_DISTANCE`.
+- [ ] **Step 3: `toFlow.ts`**: `FlowView` gains `vision?: number` (default `Infinity` = everything readable); fog node data
+  gets `hidden: vision < FOG_DISTANCE`.
+- [ ] **Step 4: `skillMapParts.tsx`**: `FogNodeData = { name: string; hidden: boolean }`; `FogOrb` renders its label only
+  when not hidden and adds class `orb--fog-far` (dimmer) when hidden.
+- [ ] **Step 5: `App.tsx`**: pass `vision` to `toFlow`, `margin={vision}` to `FogOfWar` (`FogOfWar` takes `margin?: number`,
+  default 90 as today), `hideFog` to `SkillSearch`, and `points` / `hidden` to `SuggestionCard`.
+- [ ] **Step 6: `SkillSearch.tsx`**: prop `hideFog: boolean`; when true, suggestions are left out of the matches (a hidden
+  topic must not leak its name through search).
+- [ ] **Step 7: `SuggestionCard.tsx`**: props `points: number` and `hidden: boolean`. Hidden: title `?`, text `fog.hidden`,
+  no reason, no unlock. Visible: button `fog.unlockCost`, disabled when `points < 1` with `fog.noPoints`; a 409 shows
+  `fog.noPoints`.
+- [ ] **Step 8: `i18n.ts`**: `history.SKILL_UNLOCKED` (Unlocked from the fog / Открыт из тумана), `fog.hidden` (Too far in
+  the fog to make out. Grow a level to see further. / Слишком далеко в тумане. Подними уровень, чтобы видеть дальше.),
+  `fog.unlockCost` (Unlock (1 talent point) / Открыть (1 очко таланта)), `fog.noPoints` (No talent points. The next one
+  comes with the next level. / Нет очков таланта. Следующее даст новый уровень.).
+- [ ] **Step 9: Typecheck + lint + build** (via `test-runner`).
+- [ ] **Step 10: Live check on a scratch DB copy**: V10 applies; unlock spends a point (badge 5 -> 4); History shows
+  "Открыт из тумана".
+- [ ] **Step 11: Docs** (roadmap G2 done, decisions entry), owner review, then commit.

@@ -38,8 +38,10 @@ export async function resetPositions(): Promise<void> {
   if (!response.ok) throw new Error(`Reset layout failed: ${response.status}`)
 }
 
+// Unlocking costs a talent point (game module); 409 = no point left (or the key is taken).
 export async function unlockSuggestion(key: string): Promise<void> {
-  const response = await fetch(`/api/suggestions/${encodeURIComponent(key)}/unlock`, { method: 'POST' })
+  const response = await fetch(`/api/game/unlock/${encodeURIComponent(key)}`, { method: 'POST' })
+  if (response.status === 409) throw new Error('409')
   if (!response.ok) throw new Error(`Unlock ${key} failed: ${response.status}`)
 }
 
@@ -51,7 +53,8 @@ export async function dismissSuggestion(key: string): Promise<void> {
 // Mirrors dev.minibrain.game.query.GameState: the game, computed from the revision history on every request.
 export type Title = 'STUDENT' | 'JOURNEYMAN' | 'SCHOLAR' | 'ARCHITECT' | 'MAGISTER'
 export type GameState = {
-  player: { xp: number; level: number; levelStartXp: number; nextLevelXp: number; title: Title; talentPoints: number }
+  // vision: clear fog margin in px (grows with the level)
+  player: { xp: number; level: number; levelStartXp: number; nextLevelXp: number; title: Title; talentPoints: number; vision: number }
   areas: { key: string; xp: number; rank: number }[]
 }
 
@@ -161,7 +164,7 @@ export async function fetchMissingTranslations(skill?: string): Promise<Translat
 // Mirrors dev.minibrain.revision.persistence.RevisionRepository.Revision (history, newest first).
 export type RevisionChange = {
   type: 'SKILL_CREATED' | 'SKILL_STATUS_CHANGED' | 'EVIDENCE_ADDED' | 'QUESTION_ADDED' | 'QUESTION_RESOLVED'
-    | 'RELATION_ADDED' | 'TRANSLATION_ADDED' | 'NOTES_SAVED'
+    | 'RELATION_ADDED' | 'TRANSLATION_ADDED' | 'NOTES_SAVED' | 'SKILL_UNLOCKED'
   skillKey: string | null
   fromStatus: SkillStatus | null
   toStatus: SkillStatus | null

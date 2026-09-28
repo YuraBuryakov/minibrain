@@ -12,6 +12,7 @@ import { SkillSearch } from './SkillSearch'
 import { SuggestionCard } from './SuggestionCard'
 import { edgeTypes, FogOfWar, nodeTypes } from './skillMapParts'
 import './skillMap.css'
+import { FOG_DISTANCE } from './layout'
 import { FOG_PREFIX, toFlow } from './toFlow'
 
 const STATUSES: SkillStatus[] = ['DISCOVERED', 'LEARNING', 'UNDERSTOOD', 'APPLIED', 'MASTERED']
@@ -46,10 +47,12 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
     queryClient.setQueryData<NodePosition[]>(['positions'], (old = []) => [...old.filter((p) => p.id !== pin.id), pin])
   // The game (G1): area ranks go under the hubs.
   const game = useQuery({ queryKey: ['game'], queryFn: fetchGame })
+  const vision = game.data?.player.vision
+  const fogHidden = vision !== undefined && vision < FOG_DISTANCE
   const ranks = useMemo(() => new Map((game.data?.areas ?? []).map((a) => [a.key, a.rank])), [game.data])
   const flow = useMemo(
-    () => (graph.data ? toFlow(graph.data, { selectedKey: selected, lang, statuses, pins, ranks }) : null),
-    [graph.data, selected, lang, statuses, pins, ranks],
+    () => (graph.data ? toFlow(graph.data, { selectedKey: selected, lang, statuses, pins, ranks, vision }) : null),
+    [graph.data, selected, lang, statuses, pins, ranks, vision],
   )
   const toggleStatus = (status: SkillStatus) =>
     setStatuses((current) => {
@@ -120,14 +123,14 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
         fitViewOptions={{ padding: 0.12 }}
       >
         <ViewportPortal>
-          <FogOfWar known={known} />
+          <FogOfWar known={known} margin={vision} />
         </ViewportPortal>
         <Panel position="top-right">
           <HeroBadge />
         </Panel>
         <Controls showInteractive={false} />
         <Panel position="top-left" className="map-toolbar">
-          <SkillSearch graph={graph.data} onSelect={setSelected} />
+          <SkillSearch graph={graph.data} hideFog={fogHidden} onSelect={setSelected} />
           <ImportButton />
           <ManageButton />
           <div className="lang-switch" role="group" aria-label={t('language')}>
@@ -175,6 +178,8 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
           key={suggestion.key}
           suggestion={suggestion}
           sourceName={sourceName}
+          points={game.data?.player.talentPoints ?? 0}
+          hidden={fogHidden}
           onUnlocked={setSelected}
           onClose={() => setSelected(null)}
         />

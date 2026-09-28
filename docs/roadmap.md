@@ -35,7 +35,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | Slice | What | Status |
 |---|---|---|
 | G1 | Module `game`: XP, levels, titles, area ranks computed from revisions; hero badge; ranks under hubs | ✅ done |
-| G2 | `SKILL_UNLOCKED`; unlocking costs a talent point; vision and hidden names in the fog | ⬜ |
+| G2 | `SKILL_UNLOCKED`; unlocking costs a talent point; vision and hidden names in the fog | ✅ done |
 | G3 | Quests window (all open questions) + Take quest | ⬜ |
 | G4 | Constellations, achievements, journal of deeds, XP chart, hero window | ⬜ |
 | G5 | AI teaches by rank (MINIBRAIN_CONTEXT v3, context assembly moves to `learning`) | ⬜ |

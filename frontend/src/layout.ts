@@ -20,7 +20,7 @@ const FAN_STEP = 0.7 // radians between neighbouring skills of one area
 const FAN_MAX = 1.7 * Math.PI
 const SKILL_RING_MIN = 150 // distance from the hub to its skills
 const SKILL_RING_PER_SKILL = 30
-const FOG_DISTANCE = 120 // from the source skill, further out from the centre
+export const FOG_DISTANCE = 120 // from the source skill, further out from the centre
 const FOG_STEP = 1 // radians between suggestions of one source
 
 export function radialLayout(nodes: GraphNode[]): RadialLayout {

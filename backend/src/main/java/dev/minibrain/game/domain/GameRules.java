@@ -49,6 +49,11 @@ public final class GameRules {
         return Title.STUDENT;
     }
 
+    /** Clear margin (px) around known land in the fog: 60 at level 1, +30 per level, at most 200 (spec §7). */
+    public static int vision(int level) {
+        return Math.min(200, 60 + 30 * (level - 1));
+    }
+
     /** "ddd.aggregate" -> "ddd"; the hub skill "ddd" is its own area. Same rule as the map layout. */
     public static String areaOf(String key) {
         int dot = key.indexOf('.');

@@ -145,6 +145,11 @@
   opacity: 0.9;
 }
 
+/* Beyond vision (game): fainter, nameless. */
+.orb--fog-far {
+  opacity: 0.3;
+}
+
 .orb__fog-mark {
   position: absolute;
   inset: 0;

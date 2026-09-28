@@ -77,10 +77,11 @@ Per skill, from its state at a given moment:
 
 ## 7. Vision (fog grows back with level)
 
-- The clear margin around known land grows with the character level: about 60 px at level 1 up to 200 px at level
-  10 (constant table / formula in `GameRules`, sent to the frontend in the game state).
+- The clear margin around known land grows with the character level: `60 + 30 * (level - 1)` px, at most 200 px
+  (reached at level 6). The formula lives in `GameRules`; the value is sent to the frontend in the game state.
 - A fog node **inside vision** is readable (name) and can be unlocked. **Outside vision** it shows only `?`, no name,
-  and cannot be unlocked yet. With fog nodes 120 px from their source, topics become readable around level 3.
+  and cannot be unlocked yet. With fog nodes 120 px from their source, topics become readable at level 3.
+- The vision gate is enforced in the UI (the unlock button); the server only checks talent points.
 
 ## 8. Constellations
 

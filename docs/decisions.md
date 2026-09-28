@@ -342,3 +342,17 @@ Format: date · decision · reason · alternatives considered.
 - **UI:** hero badge top right (title, level, XP bar, talent points); "Rank N · Name" under every area hub.
   `toFlow` now takes one `view` options object instead of five positional parameters.
 - **Specs live in the repo** (`docs/`), and nothing about MiniBrain goes to the Obsidian vault (owner's call).
+
+### 2026-09-29 · Game G2: talent points and vision
+
+- **History knows unlocks:** revision change type `SKILL_UNLOCKED` (V10 rebuilds `revision_change`: SQLite cannot
+  change a CHECK constraint; rows and ids are copied). Unlocks made before V10 stay SKILL_CREATED and cost nothing.
+- **The unlock use case** moved from `SuggestionController` to `skill/application/SuggestionUnlocker` (returns
+  `Optional<Skill>`, records SKILL_UNLOCKED + RELATION_ADDED). The game decides who may call it:
+  `POST /api/game/unlock/{key}` checks talent points (`max(0, level - 1 - unlocks)`) and answers 409 without one.
+  The old `/api/suggestions/{key}/unlock` is gone, so points cannot be bypassed; dismiss stays where it was.
+  Direction stays `game -> skill`.
+- **Vision** = `min(200, 60 + 30 * (level - 1))` px, sent in `GameState.player.vision`. The frontend uses it as the fog
+  margin; fog topics sit 120 px out, so below level 3 they show only "?" (no name in the node, the card or search).
+  The vision gate is UI-only; the server checks points.
+- A skill the AI creates in `newSkills` stays free (SKILL_CREATED).

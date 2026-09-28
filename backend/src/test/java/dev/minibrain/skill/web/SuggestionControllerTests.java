@@ -4,6 +4,7 @@ import dev.minibrain.importing.application.ImportApplier;
 import dev.minibrain.importing.application.ImportPreview.Item;
 import dev.minibrain.importing.application.ImportPreview.Verdict;
 import dev.minibrain.importing.application.ImportPreviewer;
+import dev.minibrain.revision.domain.RevisionChange;
 import dev.minibrain.revision.persistence.RevisionRepository;
 import dev.minibrain.skill.domain.RelationType;
 import dev.minibrain.skill.domain.SkillStatus;
@@ -28,7 +29,8 @@ class SuggestionControllerTests {
 
     private static final String UPDATE = """
             { "type": "MINIBRAIN_UPDATE", "schemaVersion": 2,
-              "newSkills": [ { "key": "sug.base", "name": "Base", "status": "LEARNING" } ],
+              "newSkills": [ { "key": "sug.base", "name": "Base", "status": "LEARNING" },
+                             { "key": "sug.xp", "name": "Xp", "status": "MASTERED" } ],
               "suggestedSkills": [
                 { "key": "sug.next", "name": { "en": "Next", "ru": "Дальше" }, "reason": { "en": "Grows from base", "ru": "Растёт из базы" },
                   "from": "sug.base" },
@@ -57,17 +59,18 @@ class SuggestionControllerTests {
         assertThat(graph.get().suggestions()).extracting(KnowledgeGraph.Suggestion::key).contains("sug.next", "sug.meh");
         assertThat(graph.get().nodes()).extracting(KnowledgeGraph.Node::key).doesNotContain("sug.next");
 
-        mvc.perform(post("/api/suggestions/sug.next/unlock")).andExpect(status().isCreated());
+        mvc.perform(post("/api/game/unlock/sug.next")).andExpect(status().isCreated()); // a MASTERED skill = points
 
         KnowledgeGraph after = graph.get();
         assertThat(after.suggestions()).extracting(KnowledgeGraph.Suggestion::key).doesNotContain("sug.next");
         assertThat(after.nodes()).contains(new KnowledgeGraph.Node("sug.next", "Next", "Дальше", SkillStatus.DISCOVERED));
         assertThat(after.edges()).contains(new KnowledgeGraph.Edge("sug.base", RelationType.LEADS_TO, "sug.next"));
-        assertThat(revisions.findRecent(1).getFirst().changes()).hasSize(2); // skill created + relation added
+        assertThat(revisions.findRecent(1).getFirst().changes()).extracting(RevisionChange::type)
+                .containsExactly(RevisionChange.Type.SKILL_UNLOCKED, RevisionChange.Type.RELATION_ADDED);
 
         mvc.perform(post("/api/suggestions/sug.meh/dismiss")).andExpect(status().isNoContent());
         assertThat(graph.get().suggestions()).extracting(KnowledgeGraph.Suggestion::key).doesNotContain("sug.meh");
-        mvc.perform(post("/api/suggestions/sug.meh/unlock")).andExpect(status().isNotFound());
+        mvc.perform(post("/api/game/unlock/sug.meh")).andExpect(status().isNotFound());
 
         // A dismissed suggestion is not offered again.
         assertThat(previewer.preview(UPDATE).items()).filteredOn(i -> "sug.meh".equals(i.skill()))

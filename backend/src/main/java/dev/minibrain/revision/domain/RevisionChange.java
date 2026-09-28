@@ -20,11 +20,16 @@ public record RevisionChange(
 
     public enum Type {
         SKILL_CREATED, SKILL_STATUS_CHANGED, EVIDENCE_ADDED, QUESTION_ADDED, QUESTION_RESOLVED,
-        RELATION_ADDED, TRANSLATION_ADDED, NOTES_SAVED
+        RELATION_ADDED, TRANSLATION_ADDED, NOTES_SAVED, SKILL_UNLOCKED
     }
 
     public static RevisionChange skillCreated(String key, String status, String name) {
         return new RevisionChange(Type.SKILL_CREATED, key, null, status, name, null, null, Instant.now());
+    }
+
+    /** A skill opened from the fog with a talent point (game). Carries the same fields as skillCreated. */
+    public static RevisionChange skillUnlocked(String key, String status, String name) {
+        return new RevisionChange(Type.SKILL_UNLOCKED, key, null, status, name, null, null, Instant.now());
     }
 
     public static RevisionChange statusChanged(String key, String from, String to) {

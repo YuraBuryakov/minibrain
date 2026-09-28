@@ -34,6 +34,23 @@ class GameRulesTests {
     }
 
     @Test
+    void visionGrowsThirtyPerLevelUpTo200() {
+        assertThat(GameRules.vision(1)).isEqualTo(60);
+        assertThat(GameRules.vision(3)).isEqualTo(120);
+        assertThat(GameRules.vision(6)).isEqualTo(200);
+        assertThat(GameRules.vision(12)).isEqualTo(200);
+    }
+
+    @Test
+    void anUnlockCreatesTheSkillAndIsCounted() {
+        var replay = new GameReplay();
+        replay.apply(new Event("SKILL_UNLOCKED", "ddd.value-object", "DISCOVERED"));
+        replay.apply(new Event("SKILL_STATUS_CHANGED", "ddd.value-object", "LEARNING"));
+        assertThat(replay.unlocks()).isEqualTo(1);
+        assertThat(replay.totalXp()).isEqualTo(10);
+    }
+
+    @Test
     void replaySumsSkillsIntoAreasAndLosesXpWhenAStatusGoesDown() {
         var replay = new GameReplay();
         replay.apply(new Event("SKILL_CREATED", "ddd", "LEARNING"));

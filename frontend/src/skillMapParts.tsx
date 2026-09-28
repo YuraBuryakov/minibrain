@@ -7,7 +7,7 @@ import { convexHull } from './layout'
 
 export type SkillNodeData = { name: string; status: SkillStatus; hub: boolean; rank?: number }
 export type AreaNodeData = { name: string; rank?: number }
-export type FogNodeData = { name: string }
+export type FogNodeData = { name: string; hidden: boolean }
 export type RuneEdgeData = { sourceRadius: number; targetRadius: number }
 
 export type SkillNode = Node<SkillNodeData, 'skill'>
@@ -47,12 +47,13 @@ function SkillOrb({ data }: NodeProps<SkillNode>) {
 }
 
 // A suggested skill: not a skill yet, a "?" in the fog (brief §14: the look may change, the model does not care).
+// Beyond the character's vision (game) the topic has no name yet, only the "?".
 function FogOrb({ data }: NodeProps<FogNode>) {
   return (
-    <div className="orb orb--fog" title={data.name}>
+    <div className={data.hidden ? 'orb orb--fog orb--fog-far' : 'orb orb--fog'} title={data.hidden ? undefined : data.name}>
       <CentreHandles />
       <span className="orb__fog-mark" aria-hidden="true">?</span>
-      <span className="orb__label">{data.name}</span>
+      {!data.hidden && <span className="orb__label">{data.name}</span>}
     </div>
   )
 }
@@ -98,7 +99,7 @@ const FOG_EXTENT = 20000 // the fog sheet reaches far beyond any map
  * Drawn in flow coordinates, so it pans and zooms with the map. Must be rendered inside <ViewportPortal>.
  * ponytail: static gradient edge, no animated smoke; add an SVG turbulence filter if it should look alive.
  */
-export function FogOfWar({ known }: { known: { x: number; y: number }[] }) {
+export function FogOfWar({ known, margin = FOG_MARGIN }: { known: { x: number; y: number }[]; margin?: number }) {
   const hull = convexHull(known)
   if (hull.length === 0) return null
   const sheet = { x: -FOG_EXTENT, y: -FOG_EXTENT, width: 2 * FOG_EXTENT, height: 2 * FOG_EXTENT }
@@ -115,7 +116,7 @@ export function FogOfWar({ known }: { known: { x: number; y: number }[] }) {
             points={hull.map((p) => `${p.x},${p.y}`).join(' ')}
             fill="#000"
             stroke="#000"
-            strokeWidth={2 * FOG_MARGIN}
+            strokeWidth={2 * margin}
             strokeLinejoin="round"
             filter="url(#fog-soft)"
           />

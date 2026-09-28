@@ -4,11 +4,19 @@ import { dismissSuggestion, unlockSuggestion, type GraphSuggestion } from './api
 import { LangContext, pick, useT } from './i18n'
 
 // Card of a suggested skill in the fog (brief §14): why the AI proposed it, then my decision.
-// Unlock makes it a DISCOVERED skill (and opens its Skill card); dismiss hides it for good.
+// Unlocking costs a talent point (game G2) and opens the new skill's card; dismiss hides it for good.
+// Beyond the character's vision the topic stays a mystery: no name, no reason, no actions.
 
-type Props = { suggestion: GraphSuggestion; sourceName: string | null; onUnlocked: (key: string) => void; onClose: () => void }
+type Props = {
+  suggestion: GraphSuggestion
+  sourceName: string | null
+  points: number
+  hidden: boolean
+  onUnlocked: (key: string) => void
+  onClose: () => void
+}
 
-export function SuggestionCard({ suggestion, sourceName, onUnlocked, onClose }: Props) {
+export function SuggestionCard({ suggestion, sourceName, points, hidden, onUnlocked, onClose }: Props) {
   const t = useT()
   const lang = useContext(LangContext)
   const queryClient = useQueryClient()
@@ -22,7 +30,8 @@ export function SuggestionCard({ suggestion, sourceName, onUnlocked, onClose }: 
       if (action === 'unlock') onUnlocked(suggestion.key)
       else onClose()
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      const message = e instanceof Error ? e.message : String(e)
+      setError(message === '409' ? t('fog.noPoints') : message)
     }
   }
 
@@ -32,24 +41,30 @@ export function SuggestionCard({ suggestion, sourceName, onUnlocked, onClose }: 
         ×
       </button>
       <header className="card__head">
-        <h1 className="card__title">{pick(lang, suggestion.name, suggestion.nameRu)}</h1>
+        <h1 className="card__title">{hidden ? '?' : pick(lang, suggestion.name, suggestion.nameRu)}</h1>
         <p className="card__status">
           <span className="orb orb--fog" />
           {t('fog.status')}
         </p>
-        {reason && <p className="card__description">{reason}</p>}
+        {!hidden && reason && <p className="card__description">{reason}</p>}
         {sourceName && <p className="card__note">{t('fog.from', { name: sourceName })}</p>}
       </header>
       <section className="card__section">
-        <p className="card__empty">{t('fog.hint')}</p>
-        <div className="import__actions">
-          <button type="button" className="card__action" onClick={() => decide('unlock')}>
-            {t('fog.unlock')}
-          </button>
-          <button type="button" className="import__secondary" onClick={() => decide('dismiss')}>
-            {t('fog.dismiss')}
-          </button>
-        </div>
+        {hidden ? (
+          <p className="card__empty">{t('fog.hidden')}</p>
+        ) : (
+          <>
+            <p className="card__empty">{points > 0 ? t('fog.hint') : t('fog.noPoints')}</p>
+            <div className="import__actions">
+              <button type="button" className="card__action" disabled={points < 1} onClick={() => decide('unlock')}>
+                {t('fog.unlockCost')}
+              </button>
+              <button type="button" className="import__secondary" onClick={() => decide('dismiss')}>
+                {t('fog.dismiss')}
+              </button>
+            </div>
+          </>
+        )}
         {error && <p className="import__error">{error}</p>}
       </section>
     </aside>
