@@ -32,3 +32,11 @@ export async function fetchSkillDetails(key: string): Promise<SkillDetails> {
   if (!response.ok) throw new Error(`GET skill ${key} failed: ${response.status}`)
   return response.json()
 }
+
+// MINIBRAIN_CONTEXT is copied to an AI as-is, so the frontend does not need its exact shape.
+export async function fetchAiContext(key: string, goal: string): Promise<unknown> {
+  const query = goal.trim() ? `?goal=${encodeURIComponent(goal.trim())}` : ''
+  const response = await fetch(`/api/skills/${encodeURIComponent(key)}/context${query}`)
+  if (!response.ok) throw new Error(`GET context ${key} failed: ${response.status}`)
+  return response.json()
+}

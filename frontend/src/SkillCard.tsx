@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchSkillDetails, type RelationType, type SkillDetails, type SkillStatus } from './api'
+import { useState } from 'react'
+import sessionPrompt from './ai/session-prompt.md?raw'
+import { fetchAiContext, fetchSkillDetails, type RelationType, type SkillDetails, type SkillStatus } from './api'
 
 // Read-only Skill card. Knowledge changes arrive through imports, not through this panel.
 
@@ -33,7 +35,7 @@ export function SkillCard({ skillKey, onSelect, onClose }: Props) {
       </button>
       {details.isPending && <p className="card__note">Opening the tome…</p>}
       {details.isError && <p className="card__note">Could not load this skill: {details.error.message}</p>}
-      {details.isSuccess && <CardBody skill={details.data} onSelect={onSelect} />}
+      {details.isSuccess && <CardBody key={skillKey} skill={details.data} onSelect={onSelect} />}
     </aside>
   )
 }
@@ -52,6 +54,8 @@ function CardBody({ skill, onSelect }: { skill: SkillDetails; onSelect: (key: st
         </p>
         {skill.description && <p className="card__description">{skill.description}</p>}
       </header>
+
+      <StudyWithAi skillKey={skill.key} />
 
       <section className="card__section">
         <h2>What I demonstrated</h2>
@@ -109,3 +113,48 @@ function CardBody({ skill, onSelect }: { skill: SkillDetails; onSelect: (key: st
     </>
   )
 }
+
+// Copies the session instructions + MINIBRAIN_CONTEXT as one text, ready to paste into an AI chat.
+function StudyWithAi({ skillKey }: { skillKey: string }) {
+  const [goal, setGoal] = useState('')
+  const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')
+
+  async function copy() {
+    try {
+      const context = await fetchAiContext(skillKey, goal)
+      const fence = '```'
+      const text = `${sessionPrompt.trimEnd()}\n\n${fence}json\n${JSON.stringify(context, null, 2)}\n${fence}\n`
+      await navigator.clipboard.writeText(text)
+      setState('copied')
+    } catch {
+      setState('failed')
+    }
+  }
+
+  return (
+    <section className="card__section">
+      <h2>Study with AI</h2>
+      <label className="card__label" htmlFor="session-goal">
+        Session goal (optional)
+      </label>
+      <input
+        id="session-goal"
+        className="card__input"
+        value={goal}
+        onChange={(e) => {
+          setGoal(e.target.value)
+          setState('idle')
+        }}
+        placeholder="e.g. learn how to choose Aggregate boundaries"
+      />
+      <button type="button" className="card__action" onClick={copy}>
+        Copy for AI session
+      </button>
+      <p className="card__hint" role="status">
+        {state === 'copied' && 'Copied. Paste it into your AI chat and start the session.'}
+        {state === 'failed' && 'Could not copy. Check that the backend is running and try again.'}
+      </p>
+    </section>
+  )
+}
+

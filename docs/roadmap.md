@@ -16,8 +16,8 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | 7 | Minimal React Skill Map (create `frontend/`) | ✅ done |
 | 7b | Game-like look: radial area clusters + dark fantasy style | ✅ done |
 | 8 | Select node + Skill card | ✅ done |
-| 9 | AI Context export (`MINIBRAIN_CONTEXT`) | ⬜ |
-| 10 | `MINIBRAIN_UPDATE` parser | ⬜ |
+| 9 | AI Context export (`MINIBRAIN_CONTEXT`) | ✅ done |
+| 10 | `MINIBRAIN_UPDATE` parser (design together with: bilingual content, session notes as `LearningSession`, see Backlog) | ⬜ |
 | 11 | Validation | ⬜ |
 | 12 | Preview / Change Set | ⬜ |
 | 13 | Apply | ⬜ |
@@ -42,3 +42,7 @@ Decided direction is noted; details still get discussed when a wish is picked up
 - **Make it a game, not a second Obsidian.** What I can do with new knowledge, levels / progression,
   charts of growth over time. Needs a brainstorm first. This lifts the CLAUDE.md "no XP / achievements"
   rule for this topic, because I explicitly asked for it.
+- **Session notes saved in MiniBrain.** The AI already writes bilingual (EN/RU) study notes before the JSON
+  (session prompt, step 9). Store them: brief §50 module `learning` with `LearningSession` (topic, date, notes EN/RU,
+  touched skills), shown on the Skill card. Design it inside the import (steps 10-13), e.g. `session.notes: {en, ru}`.
+

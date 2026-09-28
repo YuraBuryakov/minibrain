@@ -443,3 +443,59 @@
   text-decoration-color: var(--bronze);
   text-underline-offset: 3px;
 }
+
+/* ---- study with AI ---- */
+
+.card__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 15px;
+  color: var(--bone-dim);
+}
+
+.card__input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--bronze-dim);
+  border-radius: 3px;
+  background: rgba(8, 6, 13, 0.6);
+  color: var(--bone);
+  font: inherit;
+  font-size: 16px;
+}
+
+.card__input::placeholder {
+  color: var(--bone-dim);
+  opacity: 0.7;
+}
+
+.card__action {
+  margin-top: 12px;
+  padding: 9px 18px;
+  border: 1px solid var(--bronze);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #3a2a18, #22170d);
+  color: var(--parchment);
+  font-family: 'IM Fell English SC', Georgia, serif;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.card__action:hover {
+  border-color: var(--gilded);
+  box-shadow: 0 0 14px 2px var(--bronze-glow);
+}
+
+.card__input:focus-visible,
+.card__action:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 2px;
+}
+
+.card__hint {
+  min-height: 1.4em;
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: var(--bone-dim);
+}

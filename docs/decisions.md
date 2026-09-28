@@ -158,3 +158,19 @@ Format: date · decision · reason · alternatives considered.
 - **"Needs review" uses the brief's `active` flag**, no new concept.
 - **Gamification** (progression, levels, growth charts) is wanted: brainstorm before any design or code.
   The "no XP / achievements" hard rule no longer applies to this topic.
+
+### 2026-09-28 · Step 9: MINIBRAIN_CONTEXT export
+
+- **Decision:** `GET /api/skills/{key}/context?goal=` served by `AiContextQuery`, built on `SkillDetailsQuery`
+  (selects and trims, no SQL of its own). Newest 5 evidence, open questions only, up to 7 related skills ordered by
+  usefulness (outgoing REQUIRES, PART_OF, LEADS_TO, RELATED_TO, then incoming). `goal` omitted when blank.
+- **Contract extension:** `relatedSkills[]` carries `relation` + `direction` (not in the brief example) so the AI
+  knows how a neighbour relates. schemaVersion stays 1 (first version of this contract).
+- **Copy = instructions + JSON:** the Skill card copies `frontend/src/ai/session-prompt.md` (brief §17 rules and the
+  MINIBRAIN_UPDATE format) followed by the context, so one paste starts a session.
+- **Known gap:** the temporary loader still rejects `proposedStatus` / `openQuestionsResolved` that the session
+  prompt asks for; the real import (steps 10-13) will accept them.
+- **Session prompt teaches, not only tests** (update 2026-09-28): the AI explains each topic fully (what, why,
+  example, mistakes, trade-offs, links to my skills), gives English originals for terms, then verifies.
+  On "Export MiniBrain" it first writes bilingual EN/RU study notes, then the JSON. Storing those notes
+  (`LearningSession`, brief §50) is planned into the import design (steps 10-13).

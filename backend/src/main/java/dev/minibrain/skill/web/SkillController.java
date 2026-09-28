@@ -3,6 +3,8 @@ package dev.minibrain.skill.web;
 import dev.minibrain.skill.domain.Skill;
 import dev.minibrain.skill.domain.SkillStatus;
 import dev.minibrain.skill.persistence.SkillRepository;
+import dev.minibrain.skill.query.AiContext;
+import dev.minibrain.skill.query.AiContextQuery;
 import dev.minibrain.skill.query.SkillDetails;
 import dev.minibrain.skill.query.SkillDetailsQuery;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,10 +29,12 @@ public class SkillController {
 
     private final SkillRepository skills;
     private final SkillDetailsQuery detailsQuery;
+    private final AiContextQuery contextQuery;
 
-    public SkillController(SkillRepository skills, SkillDetailsQuery detailsQuery) {
+    public SkillController(SkillRepository skills, SkillDetailsQuery detailsQuery, AiContextQuery contextQuery) {
         this.skills = skills;
         this.detailsQuery = detailsQuery;
+        this.contextQuery = contextQuery;
     }
 
     @PostMapping
@@ -56,6 +61,13 @@ public class SkillController {
     @GetMapping("/{key}/details")
     public SkillDetails details(@PathVariable String key) {
         return detailsQuery.find(key)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "skill not found: " + key));
+    }
+
+    /** MINIBRAIN_CONTEXT for a learning session with an AI; {@code goal} is optional. */
+    @GetMapping("/{key}/context")
+    public AiContext context(@PathVariable String key, @RequestParam(required = false) String goal) {
+        return contextQuery.find(key, goal)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "skill not found: " + key));
     }
 
