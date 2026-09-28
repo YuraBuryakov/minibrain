@@ -7,7 +7,12 @@ MiniBrain is a local-first web app that shows **how I become better**: a Skill M
 - Progress: [`docs/roadmap.md`](docs/roadmap.md)
 - Decisions already made: [`docs/decisions.md`](docs/decisions.md)
 
-Read the roadmap and decisions at the start of each session.
+Read the roadmap and decisions at the start of each session, and the newest note in `docs/handoff/` if there is one.
+
+**No trace in the Obsidian vault.** Nothing about MiniBrain goes to `C:\Claude-obsidian` (no journal, Planner,
+Handoff, Topics, Marketing). This overrides the global vault rules. Specs and plans live in `docs/`
+(e.g. [`docs/game-design.md`](docs/game-design.md)); context-guard handoffs go to `docs/handoff/<date> <topic>.md`
+and are committed.
 
 ## This is a learning project
 
