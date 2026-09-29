@@ -18,7 +18,7 @@ public record GameState(Player player, List<Area> areas, String unlockStatus) {
                          int vision) {
     }
 
-    /** {@code rank} = the area's level on the same curve. */
-    public record Area(String key, int xp, int rank) {
+    /** {@code rank} = the area's level on the same curve; {@code complete} = a constellation (spec §8). */
+    public record Area(String key, int xp, int rank, boolean complete) {
     }
 }

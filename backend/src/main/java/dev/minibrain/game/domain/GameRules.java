@@ -1,5 +1,7 @@
 package dev.minibrain.game.domain;
 
+import java.util.Collection;
+
 /**
  * Game rules (docs/game-design.md §4-5): pure formulas, no Spring, no SQL. Every tuning number lives here.
  * Statuses are plain names ("UNDERSTOOD"), like in the revision history the game is computed from.
@@ -11,6 +13,7 @@ public final class GameRules {
     public static final int QUESTION_XP = 8;
     public static final int LEVEL_STEP = 25;
     public static final String UNLOCK_STATUS = "UNDERSTOOD"; // mastery gate: the source skill must reach it (spec §6)
+    public static final int CONSTELLATION_MIN_SKILLS = 3;
 
     public enum Title { STUDENT, JOURNEYMAN, SCHOLAR, ARCHITECT, MAGISTER }
 
@@ -58,6 +61,12 @@ public final class GameRules {
     /** Mastery gate (spec §6): a topic in the fog opens only from a source skill at UNLOCK_STATUS or higher. */
     public static boolean opensTheFog(String sourceStatus) {
         return statusXp(sourceStatus) >= statusXp(UNLOCK_STATUS);
+    }
+
+    /** Constellation (spec §8): an area of at least 3 skills, every one UNDERSTOOD or higher. */
+    public static boolean isConstellation(Collection<String> statuses) {
+        return statuses.size() >= CONSTELLATION_MIN_SKILLS
+                && statuses.stream().allMatch(s -> statusXp(s) >= statusXp("UNDERSTOOD"));
     }
 
     /** "ddd.aggregate" -> "ddd"; the hub skill "ddd" is its own area. Same rule as the map layout. */

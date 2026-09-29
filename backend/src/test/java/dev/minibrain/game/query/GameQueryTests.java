@@ -46,7 +46,7 @@ class GameQueryTests {
 
         GameState after = game.get();
         assertThat(after.player().xp() - before).isEqualTo(30 + 10 + 5);
-        assertThat(after.areas()).contains(new GameState.Area("gq", 45, 2));
+        assertThat(after.areas()).contains(new GameState.Area("gq", 45, 2, false));
         assertThat(after.player().nextLevelXp()).isGreaterThan(after.player().xp());
         assertThat(after.player().talentPoints()).isEqualTo(after.player().level() - 1);
 

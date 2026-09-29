@@ -205,6 +205,9 @@ Frontend:
 | G2 | `SKILL_UNLOCKED` migration; unlock costs a point; vision and hidden names in the fog |
 | G3 | Quests window + Take quest |
 | G3b | Mastery gate: unlock only when the source skill is UNDERSTOOD+ (§6) |
-| G4 | Constellations on the map, achievements, journal, chart, hero window |
+| G4a | Constellations on the map |
+| G4b | Timeline in the replay (state after each revision), hero window, XP chart |
+| G4c | Achievements (dates from the timeline) |
+| G4d | Journal of deeds (events from the timeline) |
 | G5 | AI teaches by rank: context v3, context assembly moves to `learning` |
 | later | Pathfinder points / new branch, bosses (with the AI chat) |

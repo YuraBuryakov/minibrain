@@ -37,8 +37,9 @@ public class GameQuery {
         int talentPoints = Math.max(0, level - 1 - replay.unlocks()); // a lost level may leave spent points "owed"
         var player = new GameState.Player(xp, level, xpForLevel(level), xpForLevel(level + 1), titleFor(level),
                 talentPoints, vision(level));
+        var constellations = replay.constellations();
         var areas = replay.areaXp().entrySet().stream()
-                .map(e -> new GameState.Area(e.getKey(), e.getValue(), levelFor(e.getValue())))
+                .map(e -> new GameState.Area(e.getKey(), e.getValue(), levelFor(e.getValue()), constellations.contains(e.getKey())))
                 .toList();
         return new GameState(player, areas, UNLOCK_STATUS);
     }

@@ -73,4 +73,23 @@ class GameRulesTests {
         replay.apply(new Event("SKILL_STATUS_CHANGED", "spring.boot", "LEARNING"));
         assertThat(replay.totalXp()).isEqualTo(63);
     }
+
+    @Test
+    void anAreaOfThreeUnderstoodSkillsIsAConstellationAndLosesItWhenOneGoesDown() {
+        var replay = new GameReplay();
+        replay.apply(new Event("SKILL_CREATED", "ddd", "UNDERSTOOD"));
+        replay.apply(new Event("SKILL_CREATED", "ddd.aggregate", "APPLIED"));
+        replay.apply(new Event("SKILL_CREATED", "spring.boot", "MASTERED"));
+        replay.apply(new Event("SKILL_CREATED", "spring.web", "MASTERED"));
+        assertThat(replay.constellations()).isEmpty(); // two skills are not enough
+
+        replay.apply(new Event("SKILL_CREATED", "ddd.entity", "LEARNING"));
+        assertThat(replay.constellations()).isEmpty(); // one skill below UNDERSTOOD
+
+        replay.apply(new Event("SKILL_STATUS_CHANGED", "ddd.entity", "UNDERSTOOD"));
+        assertThat(replay.constellations()).containsExactly("ddd");
+
+        replay.apply(new Event("SKILL_STATUS_CHANGED", "ddd.aggregate", "LEARNING"));
+        assertThat(replay.constellations()).isEmpty();
+    }
 }

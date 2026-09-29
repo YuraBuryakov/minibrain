@@ -391,3 +391,14 @@ Format: date · decision · reason · alternatives considered.
   (the first try put quest mode under that heading and the AI read it as data and ignored it).
 - **"Answered by" is evidence text, not a column:** the export adds one `evidenceAdded` item tied to the question,
   saying "answered myself" or "the AI told me the answer". A stored link and different XP wait until a real need.
+
+### 2026-09-29 · Game G4a: constellations
+
+- **G4 split into G4a-d:** constellations need only the current state; achievements, the journal and the chart need a
+  timeline in the replay, which G4b introduces and G4c / G4d reuse.
+- **Rule in `GameRules.isConstellation`** (at least 3 skills, all UNDERSTOOD+); `GameReplay.constellations()` groups the
+  replayed statuses by area, so a status going down loses the constellation. Sent as `GameState.Area.complete`.
+- **Map:** `toFlow` maps every node id of a complete area (hub + members) to that area; the hub gets
+  `is-constellation`, and so does every line whose two ends are in the same complete area (lines leaving it stay
+  normal, so the shape reads). CSS only: a gold ring that breathes, a ripple going out, lines glowing in the same
+  4 s rhythm; off under `prefers-reduced-motion`.

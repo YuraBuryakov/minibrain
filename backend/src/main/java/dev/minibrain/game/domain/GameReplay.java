@@ -1,9 +1,13 @@
 package dev.minibrain.game.domain;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Replays knowledge history (revision changes, oldest first) into per-skill progress (docs/game-design.md §3).
@@ -56,6 +60,17 @@ public final class GameReplay {
         var areas = new TreeMap<String, Integer>();
         skills.forEach((key, p) -> areas.merge(GameRules.areaOf(key), p.xp(), Integer::sum));
         return areas;
+    }
+
+    /** Keys of the areas that form a constellation right now (spec §8). */
+    public Set<String> constellations() {
+        var statuses = new HashMap<String, List<String>>();
+        skills.forEach((key, p) -> statuses.computeIfAbsent(GameRules.areaOf(key), a -> new ArrayList<>()).add(p.status));
+        var complete = new TreeSet<String>();
+        statuses.forEach((area, list) -> {
+            if (GameRules.isConstellation(list)) complete.add(area);
+        });
+        return complete;
     }
 
     // A change for a skill never seen before (should not happen) still counts, starting from DISCOVERED.

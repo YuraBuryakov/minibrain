@@ -38,7 +38,10 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | G2 | `SKILL_UNLOCKED`; unlocking costs a talent point; vision and hidden names in the fog | ✅ done |
 | G3 | Quests window (all open questions) + Take quest | ✅ done |
 | G3b | Mastery gate: a fog topic unlocks only when its source skill is UNDERSTOOD+ (design §6) | ✅ done |
-| G4 | Constellations, achievements, journal of deeds, XP chart, hero window | ⬜ |
+| G4a | Constellations on the map (gold ring that breathes, ripple, glowing lines inside the area) | ✅ |
+| G4b | Timeline in the replay, hero window, XP chart | ⬜ |
+| G4c | Achievements | ⬜ |
+| G4d | Journal of deeds | ⬜ |
 | G5 | AI teaches by rank (MINIBRAIN_CONTEXT v3, context assembly moves to `learning`) | ⬜ |
 | later | Pathfinder points / new branch, area bosses (with the AI chat) | ⬜ |
 | idea | XP for reading a skill in English (design §13a, options open, brainstorm first) | ⬜ |

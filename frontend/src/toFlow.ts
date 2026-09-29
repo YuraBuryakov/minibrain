@@ -51,6 +51,7 @@ export type FlowView = {
   ranks?: ReadonlyMap<string, number> // area key -> rank (game)
   vision?: number // clear fog margin in px (game); fog topics further out than this stay nameless
   gated?: ReadonlySet<string> // suggestion keys behind the mastery gate (game): drawn with a lock
+  constellations?: ReadonlySet<string> // complete area keys (game): gold ring on the hub, bright lines inside
 }
 
 export function toFlow(graph: KnowledgeGraph, view: FlowView): { nodes: Node[]; edges: Edge[] } {
@@ -61,6 +62,13 @@ export function toFlow(graph: KnowledgeGraph, view: FlowView): { nodes: Node[]; 
   const hubOf = new Map(areas.flatMap((a) => a.members.map((m) => [m, hubIdOf(a)] as [string, string])))
   const lit = litIds(graph, selectedKey, statuses, hubOf)
   const dim = (id: string) => (lit && !lit.has(id) ? 'is-dim' : undefined)
+  // Constellations (game G4a): node id -> its area, when that area is complete.
+  const starOf = new Map<string, string>()
+  for (const a of areas) {
+    if (!view.constellations?.has(a.name)) continue
+    for (const id of [hubIdOf(a), ...a.members]) starOf.set(id, a.name)
+  }
+  const hubClass = (id: string) => [dim(id), starOf.has(id) && 'is-constellation'].filter(Boolean).join(' ') || undefined
   const hubKeys = new Set(areas.map((a) => a.hubSkillKey).filter(Boolean))
   const radiusOf = new Map<string, number>([['core', RADIUS.core]])
 
@@ -71,7 +79,7 @@ export function toFlow(graph: KnowledgeGraph, view: FlowView): { nodes: Node[]; 
     if (area.hubSkillKey) continue // the skill itself is the hub
     const id = `area:${area.name}`
     radiusOf.set(id, RADIUS.hub)
-    nodes.push({ id, type: 'area', position: area.hub, data: { name: titleCase(area.name), rank: ranks.get(area.name) }, selectable: false, draggable: true, className: dim(id) })
+    nodes.push({ id, type: 'area', position: area.hub, data: { name: titleCase(area.name), rank: ranks.get(area.name) }, selectable: false, draggable: true, className: hubClass(id) })
   }
 
   for (const skill of graph.nodes) {
@@ -84,7 +92,7 @@ export function toFlow(graph: KnowledgeGraph, view: FlowView): { nodes: Node[]; 
       data: { name: pick(lang, skill.name, skill.nameRu), status: skill.status, hub, rank: hub ? ranks.get(skill.key) : undefined },
       selected: skill.key === selectedKey,
       draggable: true,
-      className: dim(skill.key),
+      className: hub ? hubClass(skill.key) : dim(skill.key),
     })
   }
 
@@ -111,7 +119,9 @@ export function toFlow(graph: KnowledgeGraph, view: FlowView): { nodes: Node[]; 
     source,
     target,
     type: 'rune',
-    className: edgeDim(source, target) ? `${className} is-dim` : className,
+    className: [className, starOf.has(source) && starOf.get(source) === starOf.get(target) && 'is-constellation', edgeDim(source, target) && 'is-dim']
+      .filter(Boolean)
+      .join(' '),
     selectable: false,
     data: { sourceRadius: radiusOf.get(source)!, targetRadius: radiusOf.get(target)! },
     ...extra,

@@ -242,6 +242,52 @@
   transition: opacity 200ms ease-out;
 }
 
+/* Constellation (game G4a): a complete area. A gold ring around its hub that breathes, a slow ripple going out
+   from it, and brighter lines inside the area glowing in the same rhythm. */
+.is-constellation .orb--hub::before,
+.is-constellation .orb--hub::after,
+.is-constellation .sigil::before,
+.is-constellation .sigil::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gilded);
+  pointer-events: none;
+}
+
+.is-constellation .orb--hub::after,
+.is-constellation .sigil::after {
+  box-shadow: 0 0 18px 4px var(--gilded-glow);
+  animation: constellation-breathe 4s ease-in-out infinite;
+}
+
+.is-constellation .orb--hub::before,
+.is-constellation .sigil::before {
+  opacity: 0;
+  animation: constellation-ripple 4s ease-out infinite;
+}
+
+.skill-map .is-constellation .react-flow__edge-path {
+  stroke-opacity: 1;
+  animation: constellation-line 4s ease-in-out infinite;
+}
+
+@keyframes constellation-breathe {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 12px 2px var(--gilded-glow); }
+  50% { transform: scale(1.07); box-shadow: 0 0 24px 7px var(--gilded-glow); }
+}
+
+@keyframes constellation-ripple {
+  0% { transform: scale(1); opacity: 0.7; }
+  70%, 100% { transform: scale(1.9); opacity: 0; }
+}
+
+@keyframes constellation-line {
+  0%, 100% { filter: drop-shadow(0 0 2px var(--gilded-glow)); }
+  50% { filter: drop-shadow(0 0 6px var(--gilded-glow)); }
+}
+
 .react-flow__node.is-dim {
   opacity: 0.18;
 }
@@ -254,6 +300,14 @@
   .react-flow__node,
   .react-flow__edge {
     transition: none;
+  }
+
+  .is-constellation .orb--hub::before,
+  .is-constellation .orb--hub::after,
+  .is-constellation .sigil::before,
+  .is-constellation .sigil::after,
+  .skill-map .is-constellation .react-flow__edge-path {
+    animation: none;
   }
 }
 

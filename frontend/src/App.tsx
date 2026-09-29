@@ -51,6 +51,7 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
   const vision = game.data?.player.vision
   const fogHidden = vision !== undefined && vision < FOG_DISTANCE
   const ranks = useMemo(() => new Map((game.data?.areas ?? []).map((a) => [a.key, a.rank])), [game.data])
+  const constellations = useMemo(() => new Set((game.data?.areas ?? []).filter((a) => a.complete).map((a) => a.key)), [game.data])
   // Mastery gate (G3b): fog topics whose source skill is below unlockStatus. No source on the map = no gate.
   const unlockStatus = game.data?.unlockStatus
   const gated = useMemo(() => {
@@ -60,8 +61,8 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
     return new Set(graph.data.suggestions.filter((s) => below(s.from)).map((s) => s.key))
   }, [graph.data, unlockStatus])
   const flow = useMemo(
-    () => (graph.data ? toFlow(graph.data, { selectedKey: selected, lang, statuses, pins, ranks, vision, gated }) : null),
-    [graph.data, selected, lang, statuses, pins, ranks, vision, gated],
+    () => (graph.data ? toFlow(graph.data, { selectedKey: selected, lang, statuses, pins, ranks, vision, gated, constellations }) : null),
+    [graph.data, selected, lang, statuses, pins, ranks, vision, gated, constellations],
   )
   const toggleStatus = (status: SkillStatus) =>
     setStatuses((current) => {
