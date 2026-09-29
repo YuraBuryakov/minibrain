@@ -2,6 +2,8 @@ package dev.minibrain.game.web;
 
 import dev.minibrain.game.query.GameQuery;
 import dev.minibrain.game.query.GameState;
+import dev.minibrain.game.query.HeroQuery;
+import dev.minibrain.game.query.HeroView;
 import dev.minibrain.game.query.Quest;
 import dev.minibrain.game.query.QuestsQuery;
 import dev.minibrain.game.domain.GameRules;
@@ -29,19 +31,27 @@ public class GameController {
     private final QuestsQuery quests;
     private final SuggestedSkillRepository suggestions;
     private final SkillRepository skills;
+    private final HeroQuery hero;
 
     public GameController(GameQuery game, SuggestionUnlocker unlocker, QuestsQuery quests,
-                          SuggestedSkillRepository suggestions, SkillRepository skills) {
+                          SuggestedSkillRepository suggestions, SkillRepository skills, HeroQuery hero) {
         this.game = game;
         this.unlocker = unlocker;
         this.quests = quests;
         this.suggestions = suggestions;
         this.skills = skills;
+        this.hero = hero;
     }
 
     @GetMapping("/api/game")
     public GameState game() {
         return game.get();
+    }
+
+    /** The hero window (docs/game-design.md §11): XP over time. Fetched only while the window is open. */
+    @GetMapping("/api/game/hero")
+    public HeroView hero() {
+        return hero.get();
     }
 
     /** Every open question on the map (docs/game-design.md §10). Finished only through an AI session. */
