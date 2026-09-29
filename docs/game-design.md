@@ -131,6 +131,10 @@ Locked achievements are shown dimmed with their condition, so it is clear what t
   topic unlocked, achievement earned. The technical History in Manage stays as it is.
 - **Chart**: character XP over time (line, one point per day with changes) and current area ranks (bars). Plain SVG,
   no chart library.
+- **Timeline (G4b):** the replay takes a snapshot after each revision (moment = its last change). The chart folds
+  them to the last snapshot per day, x in real time, dashed lines where levels start. Achievement dates (G4c) and
+  journal events (G4d) come from the same per-revision snapshots. Served at `GET /api/game/hero`, fetched only while
+  the hero window is open; `/api/game` stays light.
 
 ## 12. AI teaches by rank
 

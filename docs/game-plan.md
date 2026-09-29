@@ -1179,3 +1179,422 @@ public class QuestsQuery {
 
 Open point for Step 3: the goal copied is the question in English (the AI context is English-first); the Russian
 text is only shown in the window.
+
+
+# Game layer G4b Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Clicking the hero badge opens a hero window: summary, a chart of character XP over real time (one point
+per day, level thresholds as dashed lines) and the area ranks as bars (constellations in gold).
+
+**Architecture:** The replay gets a timeline: `GameReplay.snapshot()` reads the state accumulated so far; the new
+read model `game/query/HeroQuery` replays the history and takes a snapshot after each revision, then folds them to
+one point per day. Served at `GET /api/game/hero` (fetched only while the window is open). G4c / G4d reuse the
+per-revision snapshots for achievement dates and journal events. `GameQuery` and `/api/game` stay as they are.
+
+**Spec:** [`docs/game-design.md`](game-design.md) §3, §11; decisions of 2026-09-29 (G4b brainstorm).
+
+## Global Constraints
+
+- Everything from the G1-G3 constraints above still applies.
+- Nothing is stored: the timeline is recomputed from `revision_change` on every request.
+- A snapshot is taken after each revision (`revision_id` changes); its moment = `occurred_at` of the revision's last
+  change. One point per day = the last snapshot of that day, day in the server's local zone.
+- X axis in real time (distance proportional to dates), plain SVG, no chart library.
+- The window has only summary, chart and ranks. Achievements (G4c) and the journal (G4d) come later: no placeholders.
+- UI texts in both languages (`i18n.ts`); no em dashes anywhere.
+
+## File structure
+
+| File | Change |
+|---|---|
+| `backend/src/main/java/dev/minibrain/game/domain/GameReplay.java` | `Snapshot` record + `snapshot()` |
+| `backend/src/main/java/dev/minibrain/game/query/HeroView.java` | New: read model of the hero window |
+| `backend/src/main/java/dev/minibrain/game/query/HeroQuery.java` | New: replay with a snapshot per revision, XP by day |
+| `backend/src/main/java/dev/minibrain/game/web/GameController.java` | `GET /api/game/hero` |
+| `backend/src/test/java/dev/minibrain/game/domain/GameRulesTests.java` | Snapshot test |
+| `backend/src/test/java/dev/minibrain/game/query/HeroQueryTests.java` | New: import -> today's point = player XP |
+| `frontend/src/api.ts` | `HeroView` type + `fetchHero()` |
+| `frontend/src/HeroBadge.tsx` | Badge becomes a button, opens the window |
+| `frontend/src/HeroDialog.tsx` | New: summary, `XpChart`, area rank bars |
+| `frontend/src/App.tsx` | Pass the graph to `HeroBadge` (area names) |
+| `frontend/src/i18n.ts`, `frontend/src/skillMap.css` | Strings, styles |
+
+---
+
+### Task 1: Snapshot of the replay
+
+**Files:**
+- Modify: `backend/src/main/java/dev/minibrain/game/domain/GameReplay.java`
+- Test: `backend/src/test/java/dev/minibrain/game/domain/GameRulesTests.java`
+
+**Interfaces:**
+- Produces: `GameReplay.Snapshot(int xp, int level, SortedMap<String, Integer> areaXp, Set<String> constellations)`,
+  `GameReplay.snapshot()`.
+
+- [ ] **Step 1: Write the failing test** (append to `GameRulesTests`)
+
+```java
+    @Test
+    void aSnapshotFreezesTheStateSoFarAndLaterChangesDoNotTouchIt() {
+        var replay = new GameReplay();
+        replay.apply(new Event("SKILL_CREATED", "ddd.aggregate", "UNDERSTOOD"));
+        var first = replay.snapshot();
+
+        replay.apply(new Event("SKILL_CREATED", "ddd.entity", "APPLIED"));
+        replay.apply(new Event("SKILL_STATUS_CHANGED", "ddd.aggregate", "LEARNING"));
+        var second = replay.snapshot();
+
+        assertThat(first.xp()).isEqualTo(30);
+        assertThat(first.level()).isEqualTo(2);
+        assertThat(first.areaXp()).containsExactly(java.util.Map.entry("ddd", 30));
+        assertThat(second.xp()).isEqualTo(70);
+        assertThat(second.areaXp()).containsExactly(java.util.Map.entry("ddd", 70));
+        assertThat(second.constellations()).isEmpty();
+    }
+```
+
+- [ ] **Step 2: Run it, expect a compile failure** (`snapshot()` missing). Via the `test-runner` agent:
+  `mvn -q test -Dtest=GameRulesTests` in `backend`.
+
+- [ ] **Step 3: Implement** (in `GameReplay`, next to `constellations()`)
+
+```java
+    /** The state accumulated so far: one moment of the timeline (docs/game-design.md §3). */
+    public record Snapshot(int xp, int level, SortedMap<String, Integer> areaXp, Set<String> constellations) {
+    }
+
+    public Snapshot snapshot() {
+        int xp = totalXp();
+        return new Snapshot(xp, GameRules.levelFor(xp), areaXp(), constellations());
+    }
+```
+
+`areaXp()` and `constellations()` build new collections on each call, so a snapshot never changes afterwards.
+
+- [ ] **Step 4: Run `GameRulesTests` again, expect PASS.**
+
+- [ ] **Step 5: Commit** after the owner's review: `Game G4b task 1: replay snapshot`.
+
+---
+
+### Task 2: `GET /api/game/hero` (XP by day)
+
+**Files:**
+- Create: `backend/src/main/java/dev/minibrain/game/query/HeroView.java`
+- Create: `backend/src/main/java/dev/minibrain/game/query/HeroQuery.java`
+- Modify: `backend/src/main/java/dev/minibrain/game/web/GameController.java`
+- Test: `backend/src/test/java/dev/minibrain/game/query/HeroQueryTests.java`
+
+**Interfaces:**
+- Consumes: `GameReplay.snapshot()` (Task 1).
+- Produces: `HeroView(List<XpPoint> xpByDay)`, `HeroView.XpPoint(LocalDate day, int xp)`; JSON
+  `{ "xpByDay": [ { "day": "2026-09-29", "xp": 758 } ] }`, days ascending. `HeroQuery.timeline()` (package-private,
+  `List<Moment(Instant at, GameReplay.Snapshot state)>`) is what G4c / G4d build on.
+
+- [ ] **Step 1: Write the failing test**
+
+```java
+package dev.minibrain.game.query;
+
+import dev.minibrain.importing.application.ImportApplier;
+import dev.minibrain.importing.application.ImportPreview.Item;
+import dev.minibrain.importing.application.ImportPreviewer;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDate;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+// Shared in-memory DB: own area prefix ("hq"), compare with the live game state instead of fixed totals.
+@SpringBootTest(properties = "spring.datasource.url=jdbc:sqlite::memory:")
+@AutoConfigureMockMvc
+class HeroQueryTests {
+
+    @Autowired
+    ImportPreviewer previewer;
+
+    @Autowired
+    ImportApplier applier;
+
+    @Autowired
+    GameQuery game;
+
+    @Autowired
+    HeroQuery hero;
+
+    @Autowired
+    MockMvc mvc;
+
+    @Test
+    void todaysPointIsTheCurrentXpAndDaysAreAscending() throws Exception {
+        String update = """
+                { "type": "MINIBRAIN_UPDATE", "schemaVersion": 2,
+                  "newSkills": [ { "key": "hq.chart", "name": "Chart", "status": "UNDERSTOOD" } ] }
+                """;
+        applier.apply(update, previewer.preview(update).items().stream().filter(Item::selected).map(Item::id).collect(Collectors.toSet()));
+
+        var days = hero.get().xpByDay();
+        assertThat(days).isNotEmpty();
+        assertThat(days.getLast().day()).isEqualTo(LocalDate.now());
+        assertThat(days.getLast().xp()).isEqualTo(game.get().player().xp());
+        for (int i = 1; i < days.size(); i++) assertThat(days.get(i).day()).isAfter(days.get(i - 1).day());
+
+        mvc.perform(get("/api/game/hero"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.xpByDay[-1:].day").value(LocalDate.now().toString()));
+    }
+}
+```
+
+- [ ] **Step 2: Run it, expect a compile failure** (`HeroQuery` missing).
+
+- [ ] **Step 3: Implement**
+
+`HeroView.java`:
+
+```java
+package dev.minibrain.game.query;
+
+import java.time.LocalDate;
+import java.util.List;
+
+/**
+ * The hero window (docs/game-design.md §11): character XP over time, one point per day with changes, days ascending.
+ * G4c / G4d add achievements and the journal here. Not a durable contract.
+ */
+public record HeroView(List<XpPoint> xpByDay) {
+
+    public record XpPoint(LocalDate day, int xp) {
+    }
+}
+```
+
+`HeroQuery.java`:
+
+```java
+package dev.minibrain.game.query;
+
+import dev.minibrain.game.domain.GameReplay;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+/**
+ * Replays the history like {@link GameQuery}, but takes a snapshot after each revision: the game's timeline.
+ * ponytail: full replay per request, same ceiling as GameQuery.
+ */
+@Component
+public class HeroQuery {
+
+    /** One moment of the timeline: the state right after a revision. */
+    record Moment(Instant at, GameReplay.Snapshot state) {
+    }
+
+    private final JdbcClient jdbc;
+
+    public HeroQuery(JdbcClient jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    public HeroView get() {
+        var byDay = new LinkedHashMap<LocalDate, Integer>(); // moments are in time order: the last one of a day wins
+        for (Moment m : timeline()) byDay.put(LocalDate.ofInstant(m.at(), ZoneId.systemDefault()), m.state().xp());
+        return new HeroView(byDay.entrySet().stream().map(e -> new HeroView.XpPoint(e.getKey(), e.getValue())).toList());
+    }
+
+    List<Moment> timeline() {
+        record Row(long revision, GameReplay.Event event, String at) {
+        }
+        var rows = jdbc.sql("SELECT revision_id, type, skill_key, to_status, occurred_at FROM revision_change ORDER BY occurred_at, id")
+                .query((rs, rowNum) -> new Row(rs.getLong("revision_id"),
+                        new GameReplay.Event(rs.getString("type"), rs.getString("skill_key"), rs.getString("to_status")),
+                        rs.getString("occurred_at")))
+                .list();
+
+        var replay = new GameReplay();
+        var moments = new ArrayList<Moment>();
+        for (int i = 0; i < rows.size(); i++) {
+            replay.apply(rows.get(i).event());
+            boolean lastOfRevision = i + 1 == rows.size() || rows.get(i + 1).revision() != rows.get(i).revision();
+            if (lastOfRevision) moments.add(new Moment(Instant.parse(rows.get(i).at()), replay.snapshot()));
+        }
+        return moments;
+    }
+}
+```
+
+`GameController`: inject `HeroQuery hero` through the constructor and add
+
+```java
+    /** The hero window (docs/game-design.md §11): XP over time. Fetched only while the window is open. */
+    @GetMapping("/api/game/hero")
+    public HeroView hero() {
+        return hero.get();
+    }
+```
+
+- [ ] **Step 4: Run the whole backend suite via the `test-runner` agent (`mvn -q test`), expect all green.**
+
+- [ ] **Step 5: Commit** after review: `Game G4b task 2: GET /api/game/hero, XP by day from a snapshot per revision`.
+
+---
+
+### Task 3: Hero window (frontend)
+
+**Files:**
+- Modify: `frontend/src/api.ts`, `frontend/src/HeroBadge.tsx`, `frontend/src/App.tsx`, `frontend/src/i18n.ts`,
+  `frontend/src/skillMap.css`
+- Create: `frontend/src/HeroDialog.tsx`
+
+**Interfaces:**
+- Consumes: `GET /api/game/hero` (Task 2), `GameState` (`['game']`), `KnowledgeGraph` (area names).
+- Produces: `fetchHero(): Promise<HeroView>`, `HeroBadge({ graph })`, `HeroBody({ game, graph })`.
+
+- [ ] **Step 1: `api.ts`**
+
+```ts
+// Mirrors dev.minibrain.game.query.HeroView: the hero window. day = "YYYY-MM-DD", ascending.
+export type HeroView = { xpByDay: { day: string; xp: number }[] }
+
+export async function fetchHero(): Promise<HeroView> {
+  const response = await fetch('/api/game/hero')
+  if (!response.ok) throw new Error(`GET /api/game/hero failed: ${response.status}`)
+  return response.json()
+}
+```
+
+- [ ] **Step 2: `HeroBadge.tsx`**: the `<section className="hero">` becomes `<button type="button" className="hero"
+  title={t('hero.open')}>` with the same content, opening a `<dialog className="import hero-dialog">` with the same
+  open / close pattern as `QuestsButton`. The dialog renders `<HeroBody game={game.data} graph={graph} />` only while
+  open. Props: `{ graph: KnowledgeGraph | undefined }`; `App.tsx` passes `graph.data`.
+
+- [ ] **Step 3: `HeroDialog.tsx`**
+
+```tsx
+import { useQuery } from '@tanstack/react-query'
+import { useContext } from 'react'
+import { fetchHero, type GameState, type KnowledgeGraph } from './api'
+import { LangContext, pick, useT } from './i18n'
+
+// Hero window (docs/game-design.md §11): summary, XP over time, area ranks. Achievements and journal: G4c / G4d.
+
+const W = 520
+const H = 180
+const PAD = { left: 44, right: 12, top: 10, bottom: 24 }
+const DAY = 86_400_000
+const levelStart = (level: number) => 25 * (level - 1) ** 2 // same curve as GameRules.xpForLevel
+
+export function HeroBody({ game, graph }: { game: GameState; graph: KnowledgeGraph | undefined }) {
+  const t = useT()
+  const lang = useContext(LangContext)
+  const hero = useQuery({ queryKey: ['hero'], queryFn: fetchHero })
+  const p = game.player
+  const areaName = (key: string) => {
+    const hub = graph?.nodes.find((n) => n.key === key)
+    return hub ? pick(lang, hub.name, hub.nameRu) : key
+  }
+  const areas = [...game.areas].sort((a, b) => b.xp - a.xp)
+  const maxXp = Math.max(1, ...areas.map((a) => a.xp))
+
+  return (
+    <div className="hero-window">
+      <h2 className="import__title">{t(`hero.title.${p.title}`)}</h2>
+      <p className="import__hint">
+        {t('hero.level', { level: p.level })} · {t('hero.xp', { xp: p.xp, next: p.nextLevelXp })}
+        {p.talentPoints > 0 && ` · ${t('hero.points', { n: p.talentPoints })}`}
+      </p>
+
+      <h3 className="hero-window__heading">{t('hero.chart')}</h3>
+      {hero.data && hero.data.xpByDay.length > 0 && <XpChart points={hero.data.xpByDay} />}
+
+      <h3 className="hero-window__heading">{t('hero.ranks')}</h3>
+      <ul className="hero-ranks">
+        {areas.map((a) => (
+          <li key={a.key} className={a.complete ? 'is-constellation' : undefined}>
+            <span className="hero-ranks__name">
+              {areaName(a.key)} · {t(`rank.${Math.min(a.rank, 5) as 1 | 2 | 3 | 4 | 5}`)}
+            </span>
+            <span className="hero-ranks__bar">
+              <span style={{ width: `${(a.xp / maxXp) * 100}%` }} />
+            </span>
+            <span className="hero-ranks__xp">{a.xp}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+// XP over real time: x proportional to the date; dashed lines where levels start; the top line is the next level.
+function XpChart({ points }: { points: { day: string; xp: number }[] }) {
+  const t = useT()
+  const times = points.map((pt) => Date.parse(pt.day))
+  const t0 = times[0]
+  const span = Math.max(DAY, times[times.length - 1] - t0) // at least a day, so a single point sits on the left
+  const top = Math.max(...points.map((pt) => pt.xp))
+  let next = 2
+  while (levelStart(next) <= top) next++
+  const yMax = levelStart(next)
+  const x = (time: number) => PAD.left + ((time - t0) / span) * (W - PAD.left - PAD.right)
+  const y = (xp: number) => H - PAD.bottom - (xp / yMax) * (H - PAD.top - PAD.bottom)
+  const levels = Array.from({ length: next - 1 }, (_, i) => i + 2) // 2 .. next
+  const line = points.map((pt, i) => `${i ? 'L' : 'M'}${x(times[i]).toFixed(1)},${y(pt.xp).toFixed(1)}`).join(' ')
+
+  return (
+    <svg className="xp-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t('hero.chart')}>
+      {levels.map((level) => (
+        <g key={level}>
+          <line className="xp-chart__level" x1={PAD.left} x2={W - PAD.right} y1={y(levelStart(level))} y2={y(levelStart(level))} />
+          <text className="xp-chart__label" x={PAD.left - 6} y={y(levelStart(level)) + 4} textAnchor="end">
+            {t('hero.levelShort', { level })}
+          </text>
+        </g>
+      ))}
+      <path className="xp-chart__line" d={line} />
+      {points.map((pt, i) => (
+        <circle key={pt.day} className="xp-chart__dot" cx={x(times[i])} cy={y(pt.xp)} r={3.5}>
+          <title>{`${pt.day}: ${pt.xp} XP`}</title>
+        </circle>
+      ))}
+      <text className="xp-chart__label" x={PAD.left} y={H - 6}>{points[0].day}</text>
+      <text className="xp-chart__label" x={W - PAD.right} y={H - 6} textAnchor="end">{points[points.length - 1].day}</text>
+    </svg>
+  )
+}
+```
+
+With many levels the dashed lines get dense; acceptable now (level ~6 = 5 lines). Thin them out when it bites.
+
+- [ ] **Step 4: `i18n.ts`**: EN `'hero.chart': 'Experience over time'`, `'hero.ranks': 'Area ranks'`,
+  `'hero.levelShort': 'L{level}'`, `'hero.open': 'Open the hero window'`; RU `'hero.chart': 'Опыт во времени'`,
+  `'hero.ranks': 'Ранги областей'`, `'hero.levelShort': 'Ур. {level}'`, `'hero.open': 'Открыть окно героя'`.
+
+- [ ] **Step 5: `skillMap.css`**: `.hero` as a button (inherit font and color, `text-align: left`, `cursor: pointer`,
+  hover border `var(--bronze)`); `.hero-window__heading` (small caps, `var(--bone-dim)`); `.xp-chart` (`width: 100%`),
+  `__level` (stroke `var(--bronze-dim)`, dasharray `3 4`), `__line` (stroke `var(--gilded)`, width 2, no fill),
+  `__dot` (fill `var(--gilded)`), `__label` (fill `var(--bone-dim)`, 11px); `.hero-ranks` rows as a 3-column grid
+  (name, bar, XP), bar track `var(--abyss)`, fill `var(--bronze)`; `.hero-ranks .is-constellation` fill and name in
+  `var(--gilded)`.
+
+- [ ] **Step 6: `npm run build` and `npm run lint` in `frontend`, expect clean (the 3 old warnings stay).**
+
+- [ ] **Step 7: Live check** on the real DB (read only): the badge opens the window, the chart shows the days of the
+  history with level lines, Messaging's bar is gold. After the owner's OK commit
+  `Game G4b: hero window with XP over time and area ranks`, and update `docs/roadmap.md` (G4b ✅) and
+  `docs/decisions.md`.

@@ -92,4 +92,22 @@ class GameRulesTests {
         replay.apply(new Event("SKILL_STATUS_CHANGED", "ddd.aggregate", "LEARNING"));
         assertThat(replay.constellations()).isEmpty();
     }
+
+    @Test
+    void aSnapshotFreezesTheStateSoFarAndLaterChangesDoNotTouchIt() {
+        var replay = new GameReplay();
+        replay.apply(new Event("SKILL_CREATED", "ddd.aggregate", "UNDERSTOOD"));
+        var first = replay.snapshot();
+
+        replay.apply(new Event("SKILL_CREATED", "ddd.entity", "APPLIED"));
+        replay.apply(new Event("SKILL_STATUS_CHANGED", "ddd.aggregate", "LEARNING"));
+        var second = replay.snapshot();
+
+        assertThat(first.xp()).isEqualTo(30);
+        assertThat(first.level()).isEqualTo(2);
+        assertThat(first.areaXp()).containsExactly(java.util.Map.entry("ddd", 30));
+        assertThat(second.xp()).isEqualTo(70);
+        assertThat(second.areaXp()).containsExactly(java.util.Map.entry("ddd", 70));
+        assertThat(second.constellations()).isEmpty();
+    }
 }

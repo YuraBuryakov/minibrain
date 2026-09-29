@@ -62,6 +62,16 @@ public final class GameReplay {
         return areas;
     }
 
+    /** The state accumulated so far: one moment of the timeline (docs/game-design.md §3). */
+    public record Snapshot(int xp, int level, SortedMap<String, Integer> areaXp, Set<String> constellations) {
+    }
+
+    /** {@code areaXp()} and {@code constellations()} build new collections, so a snapshot never changes afterwards. */
+    public Snapshot snapshot() {
+        int xp = totalXp();
+        return new Snapshot(xp, GameRules.levelFor(xp), areaXp(), constellations());
+    }
+
     /** Keys of the areas that form a constellation right now (spec §8). */
     public Set<String> constellations() {
         var statuses = new HashMap<String, List<String>>();
