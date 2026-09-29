@@ -1404,3 +1404,26 @@ button.hero:focus-visible {
   font-size: 14px;
   color: var(--bone-dim);
 }
+
+.journal__day h4 {
+  margin: 10px 0 4px;
+  font-weight: normal;
+  color: var(--bone-dim);
+}
+
+.journal {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.journal li {
+  padding: 1px 0;
+}
+
+.journal .is-achievement {
+  color: var(--gilded);
+}
+
+.journal .is-loss {
+  color: var(--ember);
+}

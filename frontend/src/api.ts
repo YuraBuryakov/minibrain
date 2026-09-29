@@ -72,7 +72,15 @@ export type AchievementId = (typeof ACHIEVEMENTS)[number]
 
 // Mirrors dev.minibrain.game.query.HeroView: the hero window. day = "YYYY-MM-DD", ascending.
 // achievements: all of them in enum order, earnedAt (ISO instant) null while locked.
-export type HeroView = { xpByDay: { day: string; xp: number }[]; achievements: { id: AchievementId; earnedAt: string | null }[] }
+// journal: deeds, newest moment first. subject: area key, skill key or achievement id (null for the level);
+// value: the new level or rank (0 otherwise).
+export type DeedKind = 'LEVEL_UP' | 'LEVEL_DOWN' | 'RANK_UP' | 'RANK_DOWN' | 'CONSTELLATION_FORMED' | 'CONSTELLATION_LOST' | 'TOPIC_UNLOCKED' | 'ACHIEVEMENT'
+export type JournalEntry = { at: string; kind: DeedKind; subject: string | null; value: number }
+export type HeroView = {
+  xpByDay: { day: string; xp: number }[]
+  achievements: { id: AchievementId; earnedAt: string | null }[]
+  journal: JournalEntry[]
+}
 
 export async function fetchHero(): Promise<HeroView> {
   const response = await fetch('/api/game/hero')

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext } from 'react'
-import { fetchHero, type GameState, type HeroView, type KnowledgeGraph } from './api'
+import { fetchHero, type AchievementId, type GameState, type HeroView, type JournalEntry, type KnowledgeGraph } from './api'
 import { LangContext, pick, useT } from './i18n'
 
 // Hero window (docs/game-design.md §11): summary, XP over time, area ranks. Achievements and journal: G4c / G4d.
@@ -18,7 +18,7 @@ export function HeroBody({ game, graph, onClose }: Props) {
   const lang = useContext(LangContext)
   const hero = useQuery({ queryKey: ['hero'], queryFn: fetchHero })
   const p = game.player
-  const areaName = (key: string) => {
+  const nameOf = (key: string) => {
     const hub = graph?.nodes.find((n) => n.key === key)
     return hub ? pick(lang, hub.name, hub.nameRu) : key
   }
@@ -51,7 +51,7 @@ export function HeroBody({ game, graph, onClose }: Props) {
           {areas.map((a) => (
             <li key={a.key} className={a.complete ? 'is-constellation' : undefined}>
               <span className="hero-ranks__name">
-                {areaName(a.key)} · {t(`rank.${Math.min(a.rank, 5) as 1 | 2 | 3 | 4 | 5}`)}
+                {nameOf(a.key)} · {t(`rank.${Math.min(a.rank, 5) as 1 | 2 | 3 | 4 | 5}`)}
               </span>
               <span className="hero-ranks__bar">
                 <span style={{ width: `${(a.xp / maxXp) * 100}%` }} />
@@ -61,7 +61,44 @@ export function HeroBody({ game, graph, onClose }: Props) {
           ))}
         </ul>
       </section>
+
+      {hero.data && hero.data.journal.length > 0 && <Journal entries={hero.data.journal} nameOf={nameOf} />}
     </div>
+  )
+}
+
+const LOSSES = new Set(['LEVEL_DOWN', 'RANK_DOWN', 'CONSTELLATION_LOST'])
+
+// Journal of deeds (§11): newest first, grouped by local day. Losses are shown too, in ember (§3: the game is honest).
+function Journal({ entries, nameOf }: { entries: JournalEntry[]; nameOf: (key: string) => string }) {
+  const t = useT()
+  const lang = useContext(LangContext)
+  const days = new Map<string, JournalEntry[]>()
+  for (const e of entries) {
+    const day = new Date(e.at).toLocaleDateString(lang)
+    days.set(day, [...(days.get(day) ?? []), e])
+  }
+  const text = (e: JournalEntry) => {
+    const rank = t(`rank.${Math.min(Math.max(e.value, 1), 5) as 1 | 2 | 3 | 4 | 5}`)
+    const name = e.kind === 'ACHIEVEMENT' ? t(`achievement.${e.subject as AchievementId}`) : e.subject ? nameOf(e.subject) : ''
+    return t(`deed.${e.kind}`, { n: e.value, rank, name })
+  }
+  return (
+    <section className="manage__section">
+      <h3>{t('hero.journal')}</h3>
+      {[...days].map(([day, list]) => (
+        <div key={day} className="journal__day">
+          <h4>{day}</h4>
+          <ul className="journal">
+            {list.map((e, i) => (
+              <li key={i} className={LOSSES.has(e.kind) ? 'is-loss' : e.kind === 'ACHIEVEMENT' ? 'is-achievement' : undefined}>
+                {text(e)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </section>
   )
 }
 

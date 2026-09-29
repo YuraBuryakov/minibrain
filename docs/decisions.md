@@ -427,3 +427,14 @@ Format: date · decision · reason · alternatives considered.
 - **"First X"** = at least one skill at status X or higher. "Boss slayer" waits for bosses.
 - **Hero window:** "Achievements n / 9", earned first (oldest first) with a gilded rim and the date, then locked ones
   dimmed with their condition.
+
+### 2026-09-29 · Game G4d: journal of deeds
+
+- **A deed = the difference of two neighbouring moments** (`game/domain/Deed.between`, pure Java): level up / down,
+  rank up / down per area, constellation formed / lost, topics unlocked. Achievements are added at the moment they were
+  earned. The first moment is compared with an empty map, so the initial map shows up as the first day's deeds; a jump
+  of several levels in one moment is one entry.
+- **Losses are shown** (design §3), in ember; achievements in gold.
+- **The snapshot keeps the unlocked keys** (not a count) so the journal can name the topic.
+- **Order:** newest moment first, deeds inside a moment in their natural order (level, ranks, constellations, topics,
+  achievements). Grouped by local day in the hero window.
