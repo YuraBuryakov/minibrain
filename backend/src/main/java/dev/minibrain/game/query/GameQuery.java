@@ -4,6 +4,7 @@ import dev.minibrain.game.domain.GameReplay;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
+import static dev.minibrain.game.domain.GameRules.UNLOCK_STATUS;
 import static dev.minibrain.game.domain.GameRules.levelFor;
 import static dev.minibrain.game.domain.GameRules.titleFor;
 import static dev.minibrain.game.domain.GameRules.vision;
@@ -39,6 +40,6 @@ public class GameQuery {
         var areas = replay.areaXp().entrySet().stream()
                 .map(e -> new GameState.Area(e.getKey(), e.getValue(), levelFor(e.getValue())))
                 .toList();
-        return new GameState(player, areas);
+        return new GameState(player, areas, UNLOCK_STATUS);
     }
 }

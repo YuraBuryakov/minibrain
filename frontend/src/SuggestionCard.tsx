@@ -5,18 +5,20 @@ import { LangContext, pick, useT } from './i18n'
 
 // Card of a suggested skill in the fog (brief §14): why the AI proposed it, then my decision.
 // Unlocking costs a talent point (game G2) and opens the new skill's card; dismiss hides it for good.
+// Mastery gate (G3b): while the source skill is below the unlock status, the button stays disabled.
 // Beyond the character's vision the topic stays a mystery: no name, no reason, no actions.
 
 type Props = {
   suggestion: GraphSuggestion
   sourceName: string | null
   points: number
+  gate: string | null // the status the source skill must reach first (label), null = open
   hidden: boolean
   onUnlocked: (key: string) => void
   onClose: () => void
 }
 
-export function SuggestionCard({ suggestion, sourceName, points, hidden, onUnlocked, onClose }: Props) {
+export function SuggestionCard({ suggestion, sourceName, points, gate, hidden, onUnlocked, onClose }: Props) {
   const t = useT()
   const lang = useContext(LangContext)
   const queryClient = useQueryClient()
@@ -54,9 +56,11 @@ export function SuggestionCard({ suggestion, sourceName, points, hidden, onUnloc
           <p className="card__empty">{t('fog.hidden')}</p>
         ) : (
           <>
-            <p className="card__empty">{points > 0 ? t('fog.hint') : t('fog.noPoints')}</p>
+            <p className="card__empty">
+              {gate ? t('fog.gate', { name: sourceName ?? '', status: gate }) : points > 0 ? t('fog.hint') : t('fog.noPoints')}
+            </p>
             <div className="import__actions">
-              <button type="button" className="card__action" disabled={points < 1} onClick={() => decide('unlock')}>
+              <button type="button" className="card__action" disabled={points < 1 || !!gate} onClick={() => decide('unlock')}>
                 {t('fog.unlockCost')}
               </button>
               <button type="button" className="import__secondary" onClick={() => decide('dismiss')}>

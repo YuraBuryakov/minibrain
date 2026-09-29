@@ -10,6 +10,7 @@ public final class GameRules {
     public static final int EVIDENCE_CAP = 5; // evidence counted per skill: the status carries the weight
     public static final int QUESTION_XP = 8;
     public static final int LEVEL_STEP = 25;
+    public static final String UNLOCK_STATUS = "UNDERSTOOD"; // mastery gate: the source skill must reach it (spec §6)
 
     public enum Title { STUDENT, JOURNEYMAN, SCHOLAR, ARCHITECT, MAGISTER }
 
@@ -52,6 +53,11 @@ public final class GameRules {
     /** Clear margin (px) around known land in the fog: 60 at level 1, +30 per level, at most 200 (spec §7). */
     public static int vision(int level) {
         return Math.min(200, 60 + 30 * (level - 1));
+    }
+
+    /** Mastery gate (spec §6): a topic in the fog opens only from a source skill at UNLOCK_STATUS or higher. */
+    public static boolean opensTheFog(String sourceStatus) {
+        return statusXp(sourceStatus) >= statusXp(UNLOCK_STATUS);
     }
 
     /** "ddd.aggregate" -> "ddd"; the hub skill "ddd" is its own area. Same rule as the map layout. */

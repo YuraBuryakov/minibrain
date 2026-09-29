@@ -50,6 +50,7 @@ export type FlowView = {
   pins?: ReadonlyMap<string, Point>
   ranks?: ReadonlyMap<string, number> // area key -> rank (game)
   vision?: number // clear fog margin in px (game); fog topics further out than this stay nameless
+  gated?: ReadonlySet<string> // suggestion keys behind the mastery gate (game): drawn with a lock
 }
 
 export function toFlow(graph: KnowledgeGraph, view: FlowView): { nodes: Node[]; edges: Edge[] } {
@@ -95,7 +96,7 @@ export function toFlow(graph: KnowledgeGraph, view: FlowView): { nodes: Node[]; 
       id,
       type: 'fog',
       position: fog.get(s.key)!,
-      data: { name: pick(lang, s.name, s.nameRu), hidden: fogHidden },
+      data: { name: pick(lang, s.name, s.nameRu), hidden: fogHidden, locked: !!view.gated?.has(s.key) },
       selected: id === selectedKey,
       draggable: false,
       className: dim(id),

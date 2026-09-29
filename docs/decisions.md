@@ -370,3 +370,13 @@ Format: date · decision · reason · alternatives considered.
   Skill card. A quest is finished only by an AI session (`openQuestionsResolved`), never by a button.
 - **Next idea recorded (G3b, owner):** mastery gate, a fog topic unlocks only when its source skill is UNDERSTOOD+,
   on top of the talent point (design §6).
+
+### 2026-09-29 · Game G3b: mastery gate
+
+- **Rule:** a fog topic unlocks only when its source skill is UNDERSTOOD or higher (`GameRules.UNLOCK_STATUS`,
+  `opensTheFog`), on top of the talent point. A suggestion without a source skill on the map has no gate.
+- **Server enforces it:** `POST /api/game/unlock/{key}` answers 409 "master X first" after the point check; it reads the
+  suggestion and its source through `skill/persistence` (direction stays `game -> skill`).
+- **One threshold:** `GameState.unlockStatus` tells the frontend the status, so the rule is not copied into TypeScript.
+  `App` computes the set of gated suggestion keys once; the map draws a bronze padlock on those fog nodes (not on
+  nameless far ones) and the suggestion card disables Unlock with a hint naming the skill and the status.

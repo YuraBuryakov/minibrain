@@ -7,7 +7,7 @@ import { convexHull } from './layout'
 
 export type SkillNodeData = { name: string; status: SkillStatus; hub: boolean; rank?: number }
 export type AreaNodeData = { name: string; rank?: number }
-export type FogNodeData = { name: string; hidden: boolean }
+export type FogNodeData = { name: string; hidden: boolean; locked: boolean }
 export type RuneEdgeData = { sourceRadius: number; targetRadius: number }
 
 export type SkillNode = Node<SkillNodeData, 'skill'>
@@ -48,11 +48,18 @@ function SkillOrb({ data }: NodeProps<SkillNode>) {
 
 // A suggested skill: not a skill yet, a "?" in the fog (brief §14: the look may change, the model does not care).
 // Beyond the character's vision (game) the topic has no name yet, only the "?".
+// Locked (mastery gate): its source skill is not UNDERSTOOD yet; a small padlock hangs on the orb.
 function FogOrb({ data }: NodeProps<FogNode>) {
   return (
     <div className={data.hidden ? 'orb orb--fog orb--fog-far' : 'orb orb--fog'} title={data.hidden ? undefined : data.name}>
       <CentreHandles />
       <span className="orb__fog-mark" aria-hidden="true">?</span>
+      {!data.hidden && data.locked && (
+        <svg className="orb__lock" viewBox="0 0 12 14" aria-hidden="true">
+          <path d="M3 6V4a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+          <rect x="1" y="6" width="10" height="7.5" rx="1.5" fill="currentColor" />
+        </svg>
+      )}
       {!data.hidden && <span className="orb__label">{data.name}</span>}
     </div>
   )

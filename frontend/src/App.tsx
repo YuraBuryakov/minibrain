@@ -51,9 +51,17 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
   const vision = game.data?.player.vision
   const fogHidden = vision !== undefined && vision < FOG_DISTANCE
   const ranks = useMemo(() => new Map((game.data?.areas ?? []).map((a) => [a.key, a.rank])), [game.data])
+  // Mastery gate (G3b): fog topics whose source skill is below unlockStatus. No source on the map = no gate.
+  const unlockStatus = game.data?.unlockStatus
+  const gated = useMemo(() => {
+    if (!graph.data || !unlockStatus) return new Set<string>()
+    const statusOf = new Map(graph.data.nodes.map((n) => [n.key, n.status]))
+    const below = (key: string | null) => !!key && statusOf.has(key) && STATUSES.indexOf(statusOf.get(key)!) < STATUSES.indexOf(unlockStatus)
+    return new Set(graph.data.suggestions.filter((s) => below(s.from)).map((s) => s.key))
+  }, [graph.data, unlockStatus])
   const flow = useMemo(
-    () => (graph.data ? toFlow(graph.data, { selectedKey: selected, lang, statuses, pins, ranks, vision }) : null),
-    [graph.data, selected, lang, statuses, pins, ranks, vision],
+    () => (graph.data ? toFlow(graph.data, { selectedKey: selected, lang, statuses, pins, ranks, vision, gated }) : null),
+    [graph.data, selected, lang, statuses, pins, ranks, vision, gated],
   )
   const toggleStatus = (status: SkillStatus) =>
     setStatuses((current) => {
@@ -181,6 +189,7 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
           suggestion={suggestion}
           sourceName={sourceName}
           points={game.data?.player.talentPoints ?? 0}
+          gate={gated.has(suggestion.key) ? t(`legend.${unlockStatus!}`) : null}
           hidden={fogHidden}
           onUnlocked={setSelected}
           onClose={() => setSelected(null)}

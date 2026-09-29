@@ -51,6 +51,13 @@ class GameRulesTests {
     }
 
     @Test
+    void onlyAnUnderstoodOrHigherSourceOpensTheFog() {
+        assertThat(GameRules.opensTheFog("LEARNING")).isFalse();
+        assertThat(GameRules.opensTheFog("UNDERSTOOD")).isTrue();
+        assertThat(GameRules.opensTheFog("MASTERED")).isTrue();
+    }
+
+    @Test
     void replaySumsSkillsIntoAreasAndLosesXpWhenAStatusGoesDown() {
         var replay = new GameReplay();
         replay.apply(new Event("SKILL_CREATED", "ddd", "LEARNING"));

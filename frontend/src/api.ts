@@ -56,6 +56,8 @@ export type GameState = {
   // vision: clear fog margin in px (grows with the level)
   player: { xp: number; level: number; levelStartXp: number; nextLevelXp: number; title: Title; talentPoints: number; vision: number }
   areas: { key: string; xp: number; rank: number }[]
+  // mastery gate: a fog topic opens only when its source skill has reached this status
+  unlockStatus: SkillStatus
 }
 
 export async function fetchGame(): Promise<GameState> {

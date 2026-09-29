@@ -29,7 +29,7 @@ class SuggestionControllerTests {
 
     private static final String UPDATE = """
             { "type": "MINIBRAIN_UPDATE", "schemaVersion": 2,
-              "newSkills": [ { "key": "sug.base", "name": "Base", "status": "LEARNING" },
+              "newSkills": [ { "key": "sug.base", "name": "Base", "status": "UNDERSTOOD" },
                              { "key": "sug.xp", "name": "Xp", "status": "MASTERED" } ],
               "suggestedSkills": [
                 { "key": "sug.next", "name": { "en": "Next", "ru": "Дальше" }, "reason": { "en": "Grows from base", "ru": "Растёт из базы" },

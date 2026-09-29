@@ -150,6 +150,17 @@
   opacity: 0.3;
 }
 
+.orb__lock {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: 14px;
+  color: var(--bronze);
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+  pointer-events: none;
+}
+
 .orb__fog-mark {
   position: absolute;
   inset: 0;
