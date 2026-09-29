@@ -148,7 +148,10 @@ Locked achievements are shown dimmed with their condition, so it is clear what t
   AI returns `bossResult` in MINIBRAIN_UPDATE; a passed exam is recorded as revision change `BOSS_PASSED` (the only
   stored game fact) and gives the area a seal.
 
-## 13a. Open idea: XP for reading in English (not decided)
+## 13a. XP for reading in English (decided 2026-09-29: no button)
+
+Decision (owner): no "read" button. A topic studied in an AI session that the AI declares closed counts as read
+and passed; the XP comes from the imported evidence, as for everything else. The options below are kept as history.
 
 Owner's wish (2026-09-29): a little XP when I read a skill and all its information in English (practising the
 language). Tension: the core rule is "XP only for demonstrated understanding, never for clicks", and a "read" button

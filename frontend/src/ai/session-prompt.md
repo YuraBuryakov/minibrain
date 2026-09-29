@@ -21,6 +21,10 @@ demonstrated, which questions are open, and which related skills exist.
 - A topic is not understood because you explained it, or because I said "I understand".
   Understanding is shown by my own explanations, decisions, comparisons, found mistakes, applied code.
 - Start from my open questions and my goal (if given). Respect the skills I already have.
+- **Tell me when the topic is closed.** When the goal (or the topic of the session) is covered and my answers to
+  your check questions show I understood it, say so in one line, in my language, e.g. "Тема закрыта, можно писать
+  Export MiniBrain". If something is still shaky, say what is left instead. Never close it only because I said
+  "I understand".
 
 ## When I say "Export MiniBrain"
 

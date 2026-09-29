@@ -80,8 +80,6 @@ Decided direction is noted; details still get discussed when a wish is picked up
   Quest mode block (`frontend/src/ai/quest-prompt.md`), the AI first asks the question in my UI language and waits;
   on export it resolves the question and adds one evidence item saying what I showed and who gave the answer.
   Still open (only if needed): a stored link question -> evidence, different XP for "answered myself" vs "AI told me".
-- **"I read it" buttons (owner, 2026-09-29; ties into design §13a, XP for reading in English).** A button at the end
-  of the useful information (the study notes window) that says I read it all, and one on the Skill card. The card
-  button stays disabled until the notes button was pressed, so the card mark means "read everything first".
-  "Useful information" = the study notes window (confirmed). Open: once per skill or once per new content,
-  whether it gives XP (the §13a options), how it is recorded (a revision change so the replay can count it).
+- ~~**"I read it" buttons (owner, 2026-09-29; design §13a).**~~ Dropped 2026-09-29 (owner): a topic studied in an
+  AI session that the AI itself declares closed ("can export now") counts as read and passed; the imported evidence
+  already records it and gives the XP. The session prompt now tells the AI to say when the topic is closed.
