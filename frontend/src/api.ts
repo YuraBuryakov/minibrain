@@ -66,8 +66,13 @@ export async function fetchGame(): Promise<GameState> {
   return response.json()
 }
 
+// Mirrors dev.minibrain.game.domain.Achievement (docs/game-design.md §9).
+export const ACHIEVEMENTS = ['FIRST_UNDERSTANDING', 'HANDS_ON', 'MASTERY', 'QUEST_HUNTER', 'CARTOGRAPHER', 'PATHFINDER', 'CONSTELLATION', 'CHRONICLER', 'PROVEN'] as const
+export type AchievementId = (typeof ACHIEVEMENTS)[number]
+
 // Mirrors dev.minibrain.game.query.HeroView: the hero window. day = "YYYY-MM-DD", ascending.
-export type HeroView = { xpByDay: { day: string; xp: number }[] }
+// achievements: all of them in enum order, earnedAt (ISO instant) null while locked.
+export type HeroView = { xpByDay: { day: string; xp: number }[]; achievements: { id: AchievementId; earnedAt: string | null }[] }
 
 export async function fetchHero(): Promise<HeroView> {
   const response = await fetch('/api/game/hero')

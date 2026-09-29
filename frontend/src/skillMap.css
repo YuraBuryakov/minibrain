@@ -1363,3 +1363,44 @@ button.hero:focus-visible {
 .hero-ranks .is-constellation .hero-ranks__bar span {
   background: var(--gilded);
 }
+
+.achievements {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.achievement {
+  padding: 8px 10px;
+  border: 1px solid var(--ash-rim);
+  border-radius: 4px;
+  background: var(--abyss);
+  opacity: 0.45;
+}
+
+.achievement.is-earned {
+  border-color: var(--gilded);
+  box-shadow: 0 0 10px 1px var(--gilded-glow);
+  opacity: 1;
+}
+
+.achievement > span {
+  display: block;
+}
+
+.achievement__name {
+  color: var(--parchment);
+}
+
+.is-earned .achievement__name {
+  color: var(--gilded);
+}
+
+.achievement__how,
+.achievement__date {
+  font-size: 14px;
+  color: var(--bone-dim);
+}

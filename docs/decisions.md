@@ -415,3 +415,15 @@ Format: date · decision · reason · alternatives considered.
   start, the top line is the next level. Plain SVG in `HeroDialog.tsx`.
 - **The hero badge is a button** opening the window; its content became `span`s (only phrasing content inside a
   button).
+
+### 2026-09-29 · Game G4c: achievements
+
+- **Kept once earned (owner):** the date is the first moment on the timeline where the condition holds; a later drop
+  does not take it away. Levels and constellations can still be lost; the journal (G4d) will show that.
+- **`game/domain/Achievement`:** an enum, one `Predicate<Snapshot>` per value, so the list is a pure domain rule
+  tested without a DB; `HeroQuery` only dates it. A new achievement is one line plus its two i18n strings.
+- **Snapshot counters:** statuses of all skills, all evidence (uncapped: the cap of 5 is only for XP), resolved
+  questions, unlocks, notes. `NOTES_SAVED` has no skill key, so it is counted before the replay skips key-less changes.
+- **"First X"** = at least one skill at status X or higher. "Boss slayer" waits for bosses.
+- **Hero window:** "Achievements n / 9", earned first (oldest first) with a gilded rim and the date, then locked ones
+  dimmed with their condition.

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext } from 'react'
-import { fetchHero, type GameState, type KnowledgeGraph } from './api'
+import { fetchHero, type GameState, type HeroView, type KnowledgeGraph } from './api'
 import { LangContext, pick, useT } from './i18n'
 
 // Hero window (docs/game-design.md §11): summary, XP over time, area ranks. Achievements and journal: G4c / G4d.
@@ -38,6 +38,8 @@ export function HeroBody({ game, graph, onClose }: Props) {
         {p.talentPoints > 0 && ` · ${t('hero.points', { n: p.talentPoints })}`}
       </p>
 
+      {hero.data && <Achievements list={hero.data.achievements} />}
+
       <section className="manage__section">
         <h3>{t('hero.chart')}</h3>
         {hero.data && hero.data.xpByDay.length > 0 && <XpChart points={hero.data.xpByDay} />}
@@ -60,6 +62,28 @@ export function HeroBody({ game, graph, onClose }: Props) {
         </ul>
       </section>
     </div>
+  )
+}
+
+// Earned first (oldest first), then locked ones dimmed with their condition (§9). Earned once = kept.
+function Achievements({ list }: { list: HeroView['achievements'] }) {
+  const t = useT()
+  const lang = useContext(LangContext)
+  const earned = list.filter((a) => a.earnedAt).sort((a, b) => a.earnedAt!.localeCompare(b.earnedAt!))
+  const locked = list.filter((a) => !a.earnedAt)
+  return (
+    <section className="manage__section">
+      <h3>{t('hero.achievements', { n: earned.length, total: list.length })}</h3>
+      <ul className="achievements">
+        {[...earned, ...locked].map((a) => (
+          <li key={a.id} className={a.earnedAt ? 'achievement is-earned' : 'achievement'}>
+            <span className="achievement__name">{t(`achievement.${a.id}`)}</span>
+            <span className="achievement__how">{t(`achievement.${a.id}.how`)}</span>
+            {a.earnedAt && <span className="achievement__date">{new Date(a.earnedAt).toLocaleDateString(lang)}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
