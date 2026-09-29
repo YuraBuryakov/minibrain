@@ -380,3 +380,14 @@ Format: date · decision · reason · alternatives considered.
 - **One threshold:** `GameState.unlockStatus` tells the frontend the status, so the rule is not copied into TypeScript.
   `App` computes the set of gated suggestion keys once; the map draws a bronze padlock on those fog nodes (not on
   nameless far ones) and the suggestion card disables Unlock with a hint naming the skill and the status.
+
+### 2026-09-29 · Quest mode for AI sessions
+
+- **Prompt only, no backend:** `copyAiSession(skillKey, goal, questQuestion?)` appends `ai/quest-prompt.md` when a
+  quest is taken. The normal session keeps "explain first"; quest mode overrides it for the goal question only.
+- **The AI asks first, in my UI language:** the quest block carries the question as shown in the Quests window
+  (`pick(lang, ...)`), while `goal` in the context stays the exact English text so `openQuestionsResolved` matches.
+- **`## MINIBRAIN_CONTEXT` heading moved from `session-prompt.md` into the code**, so extra rule blocks go before it
+  (the first try put quest mode under that heading and the AI read it as data and ignored it).
+- **"Answered by" is evidence text, not a column:** the export adds one `evidenceAdded` item tied to the question,
+  saying "answered myself" or "the AI told me the answer". A stored link and different XP wait until a real need.

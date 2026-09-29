@@ -101,5 +101,3 @@ Rules:
   Do not repeat relations that the context already lists in `relatedSkills`.
 - `key`: lowercase, dot-separated area prefix, words joined by `-` (e.g. `ddd.aggregate`).
 - No comments inside the JSON, no trailing commas.
-
-## MINIBRAIN_CONTEXT

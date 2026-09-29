@@ -61,7 +61,7 @@ function QuestsBody({ quests, graph, onSelect, onClose }: { quests: Quest[]; onC
   async function take(q: Quest) {
     const id = `${q.skillKey}\n${q.question}`
     try {
-      await copyAiSession(q.skillKey, q.question) // the goal in English: the AI context is English-first
+      await copyAiSession(q.skillKey, q.question, pick(lang, q.question, q.questionRu)) // quest mode; the goal in English: the AI context is English-first
       setStatus({ id, ok: true })
     } catch {
       setStatus({ id, ok: false })

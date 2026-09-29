@@ -76,15 +76,10 @@ Decided direction is noted; details still get discussed when a wish is picked up
   and it proposes a whole new branch of the map, e.g. an `architecture` root with its first skills and relations.
   Probably arrives as suggestions (step 16 fog) under a new area; the AI chat would be the natural place to ask.
 - ~~**All open questions in one place.**~~ Done in game G3 (Quests window, Take quest).
-- **Quest mode for the AI session (owner, 2026-09-29).** "Take quest" already copies the whole skill context with the
-  question as the goal. Add to it: the AI is told that I will try to answer the question myself, so it must not
-  give the answer until I have answered (hints and guiding questions are fine), then check my answer.
-  If the answer ends up given (by me or by the AI) and it is new knowledge, the import must close the quest: the
-  update resolves the question (`openQuestionsResolved`) and ties it to that new knowledge (the evidence or new
-  skill that answers it), instead of the question staying open or being resolved with nothing to show.
-  Open: prompt wording (session prompt vs a quest-only block), how "answered by" is stored (a link from the question
-  to evidence / a skill, or just the answer text on the question), whether "I answered it myself" and "the AI told
-  me" give the same +8 XP (core rule: XP for demonstrated understanding).
+- ~~**Quest mode for the AI session (owner, 2026-09-29).**~~ Done 2026-09-29, prompt only: Take quest adds a
+  Quest mode block (`frontend/src/ai/quest-prompt.md`), the AI first asks the question in my UI language and waits;
+  on export it resolves the question and adds one evidence item saying what I showed and who gave the answer.
+  Still open (only if needed): a stored link question -> evidence, different XP for "answered myself" vs "AI told me".
 - **"I read it" buttons (owner, 2026-09-29; ties into design §13a, XP for reading in English).** A button at the end
   of the useful information (the study notes window) that says I read it all, and one on the Skill card. The card
   button stays disabled until the notes button was pressed, so the card mark means "read everything first".
