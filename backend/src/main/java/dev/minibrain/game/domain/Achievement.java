@@ -14,7 +14,7 @@ public enum Achievement {
     MASTERY(s -> reached(s, "MASTERED")),
     QUEST_HUNTER(s -> s.resolved() >= 10),
     CARTOGRAPHER(s -> s.areaXp().size() >= 5),
-    PATHFINDER(s -> s.unlocks() >= 1),
+    PATHFINDER(s -> !s.unlocked().isEmpty()),
     CONSTELLATION(s -> !s.constellations().isEmpty()),
     CHRONICLER(s -> s.notes() >= 10),
     PROVEN(s -> s.evidence() >= 25);

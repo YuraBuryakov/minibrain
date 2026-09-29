@@ -30,13 +30,13 @@ public final class GameReplay {
     }
 
     private final Map<String, Progress> skills = new HashMap<>();
-    private int unlocks;
+    private final List<String> unlocked = new ArrayList<>();
     private int notes;
 
     public void apply(Event e) {
         if ("NOTES_SAVED".equals(e.type())) notes++; // a session's notes: no skill key
         if (e.skillKey() == null) return;
-        if ("SKILL_UNLOCKED".equals(e.type())) unlocks++;
+        if ("SKILL_UNLOCKED".equals(e.type())) unlocked.add(e.skillKey());
         switch (e.type()) {
             case "SKILL_CREATED", "SKILL_STATUS_CHANGED", "SKILL_UNLOCKED" -> {
                 if (e.toStatus() != null) progress(e.skillKey()).status = e.toStatus();
@@ -50,7 +50,7 @@ public final class GameReplay {
 
     /** Talent points spent so far. */
     public int unlocks() {
-        return unlocks;
+        return unlocked.size();
     }
 
     public int totalXp() {
@@ -66,7 +66,7 @@ public final class GameReplay {
 
     /** The state accumulated so far: one moment of the timeline (docs/game-design.md §3). */
     public record Snapshot(int xp, int level, SortedMap<String, Integer> areaXp, Set<String> constellations,
-                           List<String> statuses, int evidence, int resolved, int unlocks, int notes) {
+                           List<String> statuses, int evidence, int resolved, List<String> unlocked, int notes) {
     }
 
     /** {@code areaXp()} and {@code constellations()} build new collections, so a snapshot never changes afterwards. */
@@ -76,7 +76,7 @@ public final class GameReplay {
         return new Snapshot(xp, GameRules.levelFor(xp), areaXp(), constellations(),
                 all.stream().map(p -> p.status).toList(),
                 all.stream().mapToInt(p -> p.evidence).sum(), // uncapped: the cap is only for XP
-                all.stream().mapToInt(p -> p.resolved).sum(), unlocks, notes);
+                all.stream().mapToInt(p -> p.resolved).sum(), List.copyOf(unlocked), notes);
     }
 
     /** Keys of the areas that form a constellation right now (spec §8). */

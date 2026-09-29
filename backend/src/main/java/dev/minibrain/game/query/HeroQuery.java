@@ -1,6 +1,7 @@
 package dev.minibrain.game.query;
 
 import dev.minibrain.game.domain.Achievement;
+import dev.minibrain.game.domain.Deed;
 import dev.minibrain.game.domain.GameReplay;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -39,7 +41,27 @@ public class HeroQuery {
                         .filter(m -> a.earnedBy(m.state())).map(Moment::at).findFirst().orElse(null)))
                 .toList();
         return new HeroView(byDay.entrySet().stream().map(e -> new HeroView.XpPoint(e.getKey(), e.getValue())).toList(),
-                achievements);
+                achievements, journal(timeline, achievements));
+    }
+
+    /** Deeds between neighbouring moments (the first against an empty map) plus earned achievements, newest first. */
+    private static List<HeroView.JournalEntry> journal(List<Moment> timeline, List<HeroView.EarnedAchievement> achievements) {
+        var entries = new ArrayList<HeroView.JournalEntry>();
+        var before = new GameReplay().snapshot();
+        for (Moment m : timeline) {
+            int start = entries.size();
+            for (Deed d : Deed.between(before, m.state())) {
+                entries.add(new HeroView.JournalEntry(m.at(), d.kind(), d.subject(), d.value()));
+            }
+            for (var a : achievements) {
+                if (m.at().equals(a.earnedAt())) {
+                    entries.add(new HeroView.JournalEntry(m.at(), Deed.Kind.ACHIEVEMENT, a.id().name(), 0));
+                }
+            }
+            before = m.state();
+            Collections.rotate(entries, entries.size() - start); // this moment first
+        }
+        return entries; // newest moment first, deeds inside a moment in their natural order (level, ranks, ...)
     }
 
     List<Moment> timeline() {

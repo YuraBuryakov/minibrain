@@ -56,6 +56,10 @@ class HeroQueryTests {
         assertThat(achievements).extracting(HeroView.EarnedAchievement::id).containsExactly(Achievement.values());
         assertThat(achievements.getFirst().earnedAt()).isNotNull(); // FIRST_UNDERSTANDING: the UNDERSTOOD skill above
 
+        var journal = hero.get().journal();
+        assertThat(journal).isNotEmpty();
+        for (int i = 1; i < journal.size(); i++) assertThat(journal.get(i).at()).isBeforeOrEqualTo(journal.get(i - 1).at());
+
         mvc.perform(get("/api/game/hero"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.xpByDay[-1:].day").value(LocalDate.now().toString()));

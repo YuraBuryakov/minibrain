@@ -128,4 +128,25 @@ class GameRulesTests {
     private static java.util.List<Achievement> earned(GameReplay.Snapshot s) {
         return java.util.Arrays.stream(Achievement.values()).filter(a -> a.earnedBy(s)).toList();
     }
+
+    @Test
+    void deedsBetweenTwoMomentsIncludeLossesAndUnlockedTopics() {
+        var replay = new GameReplay();
+        var empty = replay.snapshot();
+        replay.apply(new Event("SKILL_CREATED", "mq", "UNDERSTOOD"));
+        replay.apply(new Event("SKILL_CREATED", "mq.a", "UNDERSTOOD"));
+        replay.apply(new Event("SKILL_CREATED", "mq.b", "UNDERSTOOD"));
+        var formed = replay.snapshot(); // 90 XP: level 2, rank 2, a constellation
+        assertThat(Deed.between(empty, formed)).containsExactly(
+                new Deed(Deed.Kind.LEVEL_UP, null, 2),
+                new Deed(Deed.Kind.RANK_UP, "mq", 2),
+                new Deed(Deed.Kind.CONSTELLATION_FORMED, "mq", 0));
+
+        replay.apply(new Event("SKILL_STATUS_CHANGED", "mq.b", "DISCOVERED"));
+        replay.apply(new Event("SKILL_UNLOCKED", "mq.c", "DISCOVERED"));
+        var lost = replay.snapshot(); // 60 XP: still level 2 and rank 2, the constellation is lost
+        assertThat(Deed.between(formed, lost)).containsExactly(
+                new Deed(Deed.Kind.CONSTELLATION_LOST, "mq", 0),
+                new Deed(Deed.Kind.TOPIC_UNLOCKED, "mq.c", 0));
+    }
 }

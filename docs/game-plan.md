@@ -1664,3 +1664,29 @@ achievement at the first moment its condition holds. `HeroView` gets `achievemen
   `hero.achievements` heading. `skillMap.css`: a two-column grid of tiles, earned with a gilded rim, locked dimmed.
 - [ ] **Step 4:** `npm run build` + `npm run lint`, live check on the real DB (read only), commit after the owner's
   OK, update `docs/roadmap.md` (G4c ✅) and `docs/decisions.md`.
+
+
+# Game layer G4d Implementation Plan
+
+**Goal:** The hero window shows a journal of deeds, newest first: level up / down, rank up / down per area,
+constellation formed / lost, topic unlocked from the fog, achievement earned.
+
+**Architecture:** `game/domain/Deed.between(before, after)` compares two snapshots of the timeline (pure Java).
+`HeroQuery` runs it over neighbouring moments (the first against an empty map) and adds the achievements at the moment
+they were earned. `HeroView.journal: List<JournalEntry(at, kind, subject, value)>`. The snapshot keeps the unlocked
+keys (not just a count) so the journal can name the topic.
+
+**Spec:** [`docs/game-design.md`](game-design.md) §3 (losses are shown), §11.
+
+### Task 1: Deeds in the backend
+
+- [ ] `Deed` record + `Kind` enum + `between`; `Snapshot.unlocked` becomes `List<String>`; `HeroQuery.journal`.
+- [ ] Tests: `GameRulesTests` (gain from empty, then a lost constellation and an unlocked topic), `HeroQueryTests`
+  (journal not empty, newest first). Whole suite via `test-runner`. Commit after review.
+
+### Task 2: Journal in the hero window
+
+- [ ] `api.ts`: `journal` in `HeroView`. `HeroDialog.tsx`: section "Journal" after the ranks, grouped by day (local),
+  each line one deed; skill names from the graph, area names like the ranks, achievement names from i18n.
+  Losses in a muted ember colour. Strings EN / RU in `i18n.ts`, styles in `skillMap.css`.
+- [ ] Build + lint, live check on the real DB (read only), commit after the owner's OK, roadmap G4d ✅, decisions.
