@@ -398,8 +398,20 @@
   color: var(--bone);
 }
 
-.hero p {
+.hero > * {
+  display: block;
   margin: 0;
+}
+
+button.hero {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.hero:hover,
+button.hero:focus-visible {
+  border-color: var(--bronze);
 }
 
 .hero__title {
@@ -1282,4 +1294,72 @@
 .history__changes b {
   color: var(--parchment);
   font-weight: inherit;
+}
+
+/* ---- hero window (game G4b) ---- */
+
+.xp-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.xp-chart__level {
+  stroke: var(--bronze-dim);
+  stroke-dasharray: 3 4;
+}
+
+.xp-chart__line {
+  fill: none;
+  stroke: var(--gilded);
+  stroke-width: 2;
+}
+
+.xp-chart__dot {
+  fill: var(--gilded);
+}
+
+.xp-chart__label {
+  fill: var(--bone-dim);
+  font-size: 11px;
+}
+
+.hero-ranks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-ranks li {
+  display: grid;
+  grid-template-columns: minmax(140px, 40%) 1fr 3em;
+  gap: 10px;
+  align-items: center;
+  padding: 3px 0;
+}
+
+.hero-ranks__bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--abyss);
+  overflow: hidden;
+}
+
+.hero-ranks__bar span {
+  display: block;
+  height: 100%;
+  background: var(--bronze);
+}
+
+.hero-ranks__xp {
+  text-align: right;
+  color: var(--bone-dim);
+}
+
+.hero-ranks .is-constellation .hero-ranks__name {
+  color: var(--gilded);
+}
+
+.hero-ranks .is-constellation .hero-ranks__bar span {
+  background: var(--gilded);
 }

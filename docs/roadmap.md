@@ -39,7 +39,7 @@ After each step: *did we solve a real current problem, or build infrastructure f
 | G3 | Quests window (all open questions) + Take quest | ✅ done |
 | G3b | Mastery gate: a fog topic unlocks only when its source skill is UNDERSTOOD+ (design §6) | ✅ done |
 | G4a | Constellations on the map (gold ring that breathes, ripple, glowing lines inside the area) | ✅ |
-| G4b | Timeline in the replay, hero window, XP chart | ⬜ |
+| G4b | Timeline in the replay, hero window, XP chart | ✅ |
 | G4c | Achievements | ⬜ |
 | G4d | Journal of deeds | ⬜ |
 | G5 | AI teaches by rank (MINIBRAIN_CONTEXT v3, context assembly moves to `learning`) | ⬜ |

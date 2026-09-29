@@ -136,7 +136,7 @@ function SkillMap({ lang, onLangChange }: { lang: Lang; onLangChange: (lang: Lan
           <FogOfWar known={known} margin={vision} />
         </ViewportPortal>
         <Panel position="top-right">
-          <HeroBadge />
+          <HeroBadge graph={graph.data} />
         </Panel>
         <Controls showInteractive={false} />
         <Panel position="top-left" className="map-toolbar">

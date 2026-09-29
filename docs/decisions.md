@@ -402,3 +402,16 @@ Format: date · decision · reason · alternatives considered.
   `is-constellation`, and so does every line whose two ends are in the same complete area (lines leaving it stay
   normal, so the shape reads). CSS only: a gold ring that breathes, a ripple going out, lines glowing in the same
   4 s rhythm; off under `prefers-reduced-motion`.
+
+### 2026-09-29 · Game G4b: timeline, hero window, XP chart
+
+- **Snapshot per revision:** `GameReplay.snapshot()` copies the state so far; `game/query/HeroQuery.timeline()` takes
+  one after the last change of each revision (one import = one moment). Chosen over one snapshot per day (the journal
+  could not tell two sessions of a day apart) and over the replay emitting events (rules of "what is an event" spread
+  through the replay). G4c / G4d build on `timeline()`.
+- **Own endpoint `GET /api/game/hero`**, fetched only while the hero window is open, so `/api/game` (badge, map)
+  stays light. `GameQuery` keeps its own SELECT: two copies of one query are cheaper than a shared loader.
+- **Chart:** last snapshot per day (server's local zone), x in real time so pauses show, dashed lines where levels
+  start, the top line is the next level. Plain SVG in `HeroDialog.tsx`.
+- **The hero badge is a button** opening the window; its content became `span`s (only phrasing content inside a
+  button).

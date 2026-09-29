@@ -66,6 +66,15 @@ export async function fetchGame(): Promise<GameState> {
   return response.json()
 }
 
+// Mirrors dev.minibrain.game.query.HeroView: the hero window. day = "YYYY-MM-DD", ascending.
+export type HeroView = { xpByDay: { day: string; xp: number }[] }
+
+export async function fetchHero(): Promise<HeroView> {
+  const response = await fetch('/api/game/hero')
+  if (!response.ok) throw new Error(`GET /api/game/hero failed: ${response.status}`)
+  return response.json()
+}
+
 // Mirrors dev.minibrain.game.query.Quest: an open question seen as a quest. *Ru: null = use English.
 export type Quest = {
   area: string
