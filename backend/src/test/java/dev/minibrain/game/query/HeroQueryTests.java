@@ -1,5 +1,6 @@
 package dev.minibrain.game.query;
 
+import dev.minibrain.game.domain.Achievement;
 import dev.minibrain.importing.application.ImportApplier;
 import dev.minibrain.importing.application.ImportPreview.Item;
 import dev.minibrain.importing.application.ImportPreviewer;
@@ -50,6 +51,10 @@ class HeroQueryTests {
         assertThat(days.getLast().day()).isEqualTo(LocalDate.now());
         assertThat(days.getLast().xp()).isEqualTo(game.get().player().xp());
         for (int i = 1; i < days.size(); i++) assertThat(days.get(i).day()).isAfter(days.get(i - 1).day());
+
+        var achievements = hero.get().achievements();
+        assertThat(achievements).extracting(HeroView.EarnedAchievement::id).containsExactly(Achievement.values());
+        assertThat(achievements.getFirst().earnedAt()).isNotNull(); // FIRST_UNDERSTANDING: the UNDERSTOOD skill above
 
         mvc.perform(get("/api/game/hero"))
                 .andExpect(status().isOk())

@@ -1,5 +1,6 @@
 package dev.minibrain.game.query;
 
+import dev.minibrain.game.domain.Achievement;
 import dev.minibrain.game.domain.GameReplay;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
@@ -8,6 +9,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -29,9 +31,15 @@ public class HeroQuery {
     }
 
     public HeroView get() {
+        var timeline = timeline();
         var byDay = new LinkedHashMap<LocalDate, Integer>(); // moments are in time order: the last one of a day wins
-        for (Moment m : timeline()) byDay.put(LocalDate.ofInstant(m.at(), ZoneId.systemDefault()), m.state().xp());
-        return new HeroView(byDay.entrySet().stream().map(e -> new HeroView.XpPoint(e.getKey(), e.getValue())).toList());
+        for (Moment m : timeline) byDay.put(LocalDate.ofInstant(m.at(), ZoneId.systemDefault()), m.state().xp());
+        var achievements = Arrays.stream(Achievement.values())
+                .map(a -> new HeroView.EarnedAchievement(a, timeline.stream()
+                        .filter(m -> a.earnedBy(m.state())).map(Moment::at).findFirst().orElse(null)))
+                .toList();
+        return new HeroView(byDay.entrySet().stream().map(e -> new HeroView.XpPoint(e.getKey(), e.getValue())).toList(),
+                achievements);
     }
 
     List<Moment> timeline() {

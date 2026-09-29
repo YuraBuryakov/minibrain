@@ -31,8 +31,10 @@ public final class GameReplay {
 
     private final Map<String, Progress> skills = new HashMap<>();
     private int unlocks;
+    private int notes;
 
     public void apply(Event e) {
+        if ("NOTES_SAVED".equals(e.type())) notes++; // a session's notes: no skill key
         if (e.skillKey() == null) return;
         if ("SKILL_UNLOCKED".equals(e.type())) unlocks++;
         switch (e.type()) {
@@ -63,13 +65,18 @@ public final class GameReplay {
     }
 
     /** The state accumulated so far: one moment of the timeline (docs/game-design.md §3). */
-    public record Snapshot(int xp, int level, SortedMap<String, Integer> areaXp, Set<String> constellations) {
+    public record Snapshot(int xp, int level, SortedMap<String, Integer> areaXp, Set<String> constellations,
+                           List<String> statuses, int evidence, int resolved, int unlocks, int notes) {
     }
 
     /** {@code areaXp()} and {@code constellations()} build new collections, so a snapshot never changes afterwards. */
     public Snapshot snapshot() {
         int xp = totalXp();
-        return new Snapshot(xp, GameRules.levelFor(xp), areaXp(), constellations());
+        var all = skills.values();
+        return new Snapshot(xp, GameRules.levelFor(xp), areaXp(), constellations(),
+                all.stream().map(p -> p.status).toList(),
+                all.stream().mapToInt(p -> p.evidence).sum(), // uncapped: the cap is only for XP
+                all.stream().mapToInt(p -> p.resolved).sum(), unlocks, notes);
     }
 
     /** Keys of the areas that form a constellation right now (spec §8). */

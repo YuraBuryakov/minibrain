@@ -110,4 +110,22 @@ class GameRulesTests {
         assertThat(second.areaXp()).containsExactly(java.util.Map.entry("ddd", 70));
         assertThat(second.constellations()).isEmpty();
     }
+
+    @Test
+    void achievementsFollowTheSnapshotCountersAndNotesWithoutASkillCount() {
+        var replay = new GameReplay();
+        replay.apply(new Event("SKILL_CREATED", "ddd.aggregate", "LEARNING"));
+        assertThat(earned(replay.snapshot())).isEmpty();
+
+        replay.apply(new Event("SKILL_STATUS_CHANGED", "ddd.aggregate", "APPLIED"));
+        replay.apply(new Event("SKILL_UNLOCKED", "ddd.entity", "DISCOVERED"));
+        replay.apply(new Event("NOTES_SAVED", null, null));
+        var s = replay.snapshot();
+        assertThat(s.notes()).isEqualTo(1);
+        assertThat(earned(s)).containsExactly(Achievement.FIRST_UNDERSTANDING, Achievement.HANDS_ON, Achievement.PATHFINDER);
+    }
+
+    private static java.util.List<Achievement> earned(GameReplay.Snapshot s) {
+        return java.util.Arrays.stream(Achievement.values()).filter(a -> a.earnedBy(s)).toList();
+    }
 }

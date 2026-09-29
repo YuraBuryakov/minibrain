@@ -1598,3 +1598,69 @@ With many levels the dashed lines get dense; acceptable now (level ~6 = 5 lines)
   history with level lines, Messaging's bar is gold. After the owner's OK commit
   `Game G4b: hero window with XP over time and area ranks`, and update `docs/roadmap.md` (G4b ✅) and
   `docs/decisions.md`.
+
+
+# Game layer G4c Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** The hero window lists the achievements of design §9: earned ones with their date, locked ones dimmed with
+their condition.
+
+**Architecture:** The replay snapshot gains the counters the conditions need. `game/domain/Achievement` is an enum,
+one condition (a predicate over a snapshot) per value. `HeroQuery` walks the timeline (G4b) and dates each
+achievement at the first moment its condition holds. `HeroView` gets `achievements`.
+
+**Spec:** [`docs/game-design.md`](game-design.md) §9; decision of 2026-09-29: an achievement, once earned, is kept.
+
+## Global Constraints
+
+- Everything from the G1-G4b constraints above still applies.
+- Earned once = kept forever (date = first moment the condition holds). Levels and constellations can still be lost.
+- "Boss slayer" is left out until bosses exist.
+- "First X" means at least one skill at status X or higher. Evidence for "Proven" counts all evidence (no cap).
+- `NOTES_SAVED` has no skill key: count it before the replay's "no skill key" early return.
+
+## File structure
+
+| File | Change |
+|---|---|
+| `backend/src/main/java/dev/minibrain/game/domain/GameReplay.java` | Counters (statuses, evidence, resolved, unlocks, notes) in `Snapshot` |
+| `backend/src/main/java/dev/minibrain/game/domain/Achievement.java` | New: the list of achievements and their conditions |
+| `backend/src/main/java/dev/minibrain/game/query/HeroView.java` | `achievements: List<EarnedAchievement(id, earnedAt)>` |
+| `backend/src/main/java/dev/minibrain/game/query/HeroQuery.java` | Dates from the timeline |
+| `backend/src/test/java/dev/minibrain/game/domain/GameRulesTests.java` | Conditions over snapshots |
+| `backend/src/test/java/dev/minibrain/game/query/HeroQueryTests.java` | Every achievement listed, earned ones dated |
+| `frontend/src/api.ts`, `frontend/src/HeroDialog.tsx`, `frontend/src/i18n.ts`, `frontend/src/skillMap.css` | Section "Achievements" |
+
+---
+
+### Task 1: Achievements in the backend
+
+**Interfaces:**
+- Produces: `GameReplay.Snapshot(int xp, int level, SortedMap<String, Integer> areaXp, Set<String> constellations,
+  List<String> statuses, int evidence, int resolved, int unlocks, int notes)`;
+  `enum Achievement { FIRST_UNDERSTANDING, HANDS_ON, MASTERY, QUEST_HUNTER, CARTOGRAPHER, PATHFINDER, CONSTELLATION,
+  CHRONICLER, PROVEN; boolean earnedBy(Snapshot) }`;
+  `HeroView.EarnedAchievement(Achievement id, Instant earnedAt)` (`earnedAt` null = locked), in enum order.
+
+- [ ] **Step 1: Failing tests.** `GameRulesTests`: a replay that reaches UNDERSTOOD, then APPLIED, 1 unlock, 1 notes
+  save; assert which achievements `earnedBy` each snapshot. `HeroQueryTests`: `hero.get().achievements()` lists all 9
+  in enum order, `FIRST_UNDERSTANDING` has a date (the import in the test creates an UNDERSTOOD skill).
+- [ ] **Step 2: Run, expect compile failures.**
+- [ ] **Step 3: Implement.** `GameReplay`: count `NOTES_SAVED` before the null-key return; `Snapshot` gets the
+  counters (`statuses` = a copy of every skill's status). `Achievement` enum with a `Predicate<Snapshot>` per value
+  (thresholds: QUEST_HUNTER 10 resolved, CARTOGRAPHER 5 areas, CHRONICLER 10 notes, PROVEN 25 evidence).
+  `HeroQuery.get()`: for each achievement the `at` of the first moment whose snapshot earns it.
+- [ ] **Step 4: Whole backend suite via `test-runner`, expect green.**
+- [ ] **Step 5: Commit after review:** `Game G4c task 1: achievements dated from the timeline`.
+
+### Task 2: Achievements in the hero window
+
+- [ ] **Step 1:** `api.ts`: `achievements: { id: AchievementId; earnedAt: string | null }[]` in `HeroView`.
+- [ ] **Step 2:** `HeroDialog.tsx`: section "Achievements" between the summary and the chart, earned first (by date),
+  then locked. Each: name, condition, date (local date) or dimmed.
+- [ ] **Step 3:** `i18n.ts`: `achievement.<ID>` (name) and `achievement.<ID>.how` (condition) in EN and RU,
+  `hero.achievements` heading. `skillMap.css`: a two-column grid of tiles, earned with a gilded rim, locked dimmed.
+- [ ] **Step 4:** `npm run build` + `npm run lint`, live check on the real DB (read only), commit after the owner's
+  OK, update `docs/roadmap.md` (G4c ✅) and `docs/decisions.md`.
